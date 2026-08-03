@@ -14,6 +14,19 @@ green accent, monospaced everywhere. Zero third-party dependencies.
 | **Readout** | Current value, collapsing 16/32/64-bit field, a live row for every base 2–36 + Base64 |
 | **Entry** | Radix-aware keypad — digits illegal in the current base are dimmed and dead, never hidden |
 | **History** | Every committed value, in the base you typed it; tap one to load it back into the readout |
+| **Settings** | Choose which bases the readout shows — most people live in three or four of them |
+
+Tap the readout card (or **ENTER VALUE**) to open the keypad. On a Mac or an iPad with a hardware
+keyboard you can just type: the same per-base validation applies, so `E` types in hex and does
+nothing at all in decimal. `return` commits, `delete` backspaces, `esc` cancels.
+
+### Visible bases
+
+Bases are stored in `UserDefaults` through a `UserDefault` property wrapper where **an absent key
+reads as the default** — so a new device shows BIN, OCT, DEC, HEX and Base64 with no first-launch
+seeding, no `register(defaults:)`, and no migration. Flipping a switch writes an explicit
+`true`/`false`; *Restore defaults* deletes the keys rather than overwriting them, so a future change
+to the default set still reaches devices that never customised it.
 
 The full specification lives in [`docs/`](docs/) (00–09). Those documents are the contract; this
 README only describes how to build and test.
@@ -41,7 +54,7 @@ request, across three destinations with `fail-fast` off so each one reports inde
 | Destination | What runs |
 |---|---|
 | `platform=iOS Simulator,name=iPhone 17 Pro` | unit tests + all UI tests |
-| `platform=iOS Simulator,name=iPad Pro 13-inch (M5)` | unit tests + the end-to-end journey |
+| `platform=iOS Simulator,name=iPad Pro 13-inch (M5)` | unit tests + the end-to-end journey and the settings journey |
 | `platform=macOS` | build + unit tests |
 
 Result bundles upload as artifacts when a job fails; captured screenshots upload when it succeeds.
@@ -61,6 +74,7 @@ xcodebuild test -project iBase.xcodeproj -scheme iBase \
   -destination 'platform=iOS Simulator,name=iPad Pro 13-inch (M5)' \
   -only-testing:iBaseTests \
   -only-testing:iBaseUITests/iBaseUITests/testConvertCommitReloadAndDeleteJourney \
+  -only-testing:iBaseUITests/iBaseUITests/testSettingsControlsWhichBaseRowsAppear \
   -resultBundlePath artifacts/ipad.xcresult
 
 # macOS — build + unit
@@ -105,6 +119,10 @@ lives in the script, so localized or restyled variants regenerate with the artwo
 - **`iBaseTests`** — `Radix` round-trips across every base including `0` and `UInt64.max`, the
   Base64 fixtures, `displayBitWidth` boundaries, view-model input guards, and `commit(in:)` against
   an in-memory `ModelContainer`.
+  Hardware-keyboard entry is covered here too, in `KeyboardInputTests`: XCUITest cannot drive a
+  real keyboard on the simulator, so the policy is asserted directly — including that the keyboard
+  and the keypad agree on legality for every base × digit pair.
 - **`iBaseUITests`** — one end-to-end journey (empty → hex entry `7E` → commit → readout → history
-  → reload → delete → empty) driven entirely through accessibility identifiers, a launch-performance
-  test, and the App Store capture test.
+  → reload → delete → empty) driven entirely through accessibility identifiers, the settings
+  journey (show a hidden base, hide a default one, restore), tap-to-enter, the empty-bases state, a
+  launch-performance test, and the App Store capture test.

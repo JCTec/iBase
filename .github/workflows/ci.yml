@@ -32,7 +32,7 @@ jobs:
           - name: iPad
             destination: "platform=iOS Simulator,name=iPad Pro 13-inch (M5)"
             slug: ipad
-            testing: "-only-testing:iBaseTests -only-testing:iBaseUITests/iBaseUITests/testConvertCommitReloadAndDeleteJourney"
+            testing: "-only-testing:iBaseTests -only-testing:iBaseUITests/iBaseUITests/testConvertCommitReloadAndDeleteJourney -only-testing:iBaseUITests/iBaseUITests/testSettingsControlsWhichBaseRowsAppear"
           - name: macOS
             destination: "platform=macOS"
             slug: macos

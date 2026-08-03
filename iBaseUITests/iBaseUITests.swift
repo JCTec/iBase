@@ -122,6 +122,82 @@ final class iBaseUITests: XCTestCase {
     XCTAssertTrue(self.element("emptyHistoryView").waitForExistence(timeout: 5.0))
   }
 
+  // MARK: Settings — which bases the readout shows
+
+  func testSettingsControlsWhichBaseRowsAppear() throws {
+    self.launchApp()
+
+    XCTAssertTrue(self.app.staticTexts["readoutValue"].waitForExistence(timeout: 5.0))
+
+    // A fresh device shows the default set and nothing else — no seeding, no first-run pass.
+    XCTAssertTrue(self.app.buttons["baseRow-2"].exists)
+    XCTAssertTrue(self.app.buttons["baseRow-8"].exists)
+    XCTAssertTrue(self.app.buttons["baseRow-10"].exists)
+    XCTAssertTrue(self.app.buttons["baseRow-16"].exists)
+    XCTAssertTrue(self.app.buttons["baseRow-64"].exists)
+    XCTAssertFalse(self.app.buttons["baseRow-3"].exists, "base 3 starts hidden")
+    XCTAssertFalse(self.app.buttons["baseRow-36"].exists, "base 36 starts hidden")
+
+    // Turn one on.
+    self.openSettings()
+    self.setBaseVisible(true, for: 36)
+    self.popToReadout()
+
+    XCTAssertTrue(self.app.buttons["baseRow-36"].waitForExistence(timeout: 5.0))
+
+    // Turn a default one off.
+    self.openSettings()
+    self.setBaseVisible(false, for: 8)
+    self.popToReadout()
+
+    XCTAssertTrue(self.app.staticTexts["readoutValue"].waitForExistence(timeout: 5.0))
+    XCTAssertFalse(self.app.buttons["baseRow-8"].exists, "base 8 was switched off")
+    XCTAssertTrue(self.app.buttons["baseRow-36"].exists, "base 36 is still on")
+
+    // Restoring puts the default set back exactly.
+    self.openSettings()
+
+    let restoreButton = self.app.buttons["restoreDefaultsButton"]
+    XCTAssertTrue(restoreButton.waitForExistence(timeout: 5.0))
+    restoreButton.tap()
+    self.popToReadout()
+
+    XCTAssertTrue(self.app.buttons["baseRow-8"].waitForExistence(timeout: 5.0))
+    XCTAssertFalse(self.app.buttons["baseRow-36"].exists)
+  }
+
+  func testHidingEveryBaseShowsTheEmptyState() throws {
+    self.launchApp()
+
+    XCTAssertTrue(self.app.staticTexts["readoutValue"].waitForExistence(timeout: 5.0))
+
+    self.openSettings()
+    [2, 8, 10, 16, 64].forEach { base in
+      self.setBaseVisible(false, for: base)
+    }
+    self.popToReadout()
+
+    XCTAssertTrue(self.element("noVisibleBasesView").waitForExistence(timeout: 5.0))
+    // The value itself never disappears — only the rows are filtered.
+    XCTAssertTrue(self.app.staticTexts["readoutValue"].exists)
+  }
+
+  // MARK: Tapping the readout card starts an entry
+
+  func testTappingTheInputCardOpensTheKeypad() throws {
+    self.launchApp()
+
+    let readout = self.app.staticTexts["readoutValue"]
+    XCTAssertTrue(readout.waitForExistence(timeout: 5.0))
+
+    readout.tap()
+
+    XCTAssertTrue(
+      self.app.buttons["keypadKey-7"].waitForExistence(timeout: 5.0),
+      "tapping the card must do what ENTER VALUE does"
+    )
+  }
+
   // MARK: Launch performance
 
   func testLaunchPerformance() throws {
@@ -187,6 +263,42 @@ final class iBaseUITests: XCTestCase {
     let option = self.app.buttons["entryBaseOption-\(base)"]
     XCTAssertTrue(option.waitForExistence(timeout: 5.0))
     option.tap()
+  }
+
+  private func openSettings() {
+    let settingsButton = self.app.buttons["settingsButton"]
+    XCTAssertTrue(settingsButton.waitForExistence(timeout: 5.0))
+    self.reveal(settingsButton)
+    settingsButton.tap()
+  }
+
+  private func setBaseVisible(_ isVisible: Bool, for base: Int) {
+    let toggle = self.app.switches["baseVisibilityToggle-\(base)"]
+
+    // The settings list is lazy: a row 30 bases down does not merely sit off-screen, it does not
+    // exist yet — so scroll it into being before asking anything about it.
+    self.scrollIntoExistence(toggle)
+    self.reveal(toggle)
+
+    let isCurrentlyOn = (toggle.value as? String) == "1"
+    guard isCurrentlyOn != isVisible else { return }
+
+    toggle.tap()
+  }
+
+  private func scrollIntoExistence(_ element: XCUIElement, maximumSwipes: Int = 24) {
+    guard !element.exists else { return }
+
+    for _ in 0..<maximumSwipes where !element.exists {
+      self.app.swipeUp()
+    }
+
+    // It may equally be above the current position, e.g. after walking down the list.
+    for _ in 0..<maximumSwipes where !element.exists {
+      self.app.swipeDown()
+    }
+
+    XCTAssertTrue(element.exists, "\(element) never materialised in the list")
   }
 
   private func popToReadout() {
