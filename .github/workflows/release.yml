@@ -1,0 +1,101 @@
+name: Release
+
+# Deliberate triggers only. macOS runner minutes bill at a 10x multiplier on private repositories,
+# and these lanes upload to Apple — neither belongs on every push.
+on:
+  workflow_dispatch:
+    inputs:
+      lane:
+        description: "Which release lane to run"
+        required: true
+        type: choice
+        options:
+          - ios_beta
+          - ios_release
+          - mac_release
+          - mac_release_developer_id
+          - screenshots
+      changelog:
+        description: "TestFlight changelog (ios_beta only; defaults to the commit subject)"
+        required: false
+        type: string
+  push:
+    tags:
+      - "v*"
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false # never cancel a run that may already have uploaded to Apple
+
+env:
+  XCODE_VERSION: "26.5"
+
+jobs:
+  release:
+    name: ${{ github.event.inputs.lane || 'ios_beta (tag)' }}
+    runs-on: macos-26
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: |
+          sudo xcode-select -s "/Applications/Xcode_${XCODE_VERSION}.app" 2>/dev/null \
+            || sudo xcode-select -s /Applications/Xcode.app
+          xcodebuild -version
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Set up Ruby and bundler cache
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      # Validation before anything is signed or uploaded. A build that does not pass its own tests
+      # has no business reaching TestFlight.
+      - name: Validate
+        run: bundle exec fastlane test
+
+      - name: Run release lane
+        env:
+          # App Store Connect API key — never an Apple ID and password.
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_CONTENT: ${{ secrets.ASC_KEY_CONTENT }}
+          IBASE_TEAM_ID: ${{ secrets.IBASE_TEAM_ID }}
+          IBASE_ITC_TEAM_ID: ${{ secrets.IBASE_ITC_TEAM_ID }}
+          # match. Required on CI: setup_signing! refuses to fall back to a keychain that is not there.
+          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
+          FASTLANE_HIDE_CHANGELOG: "true"
+        run: |
+          LANE="${{ github.event.inputs.lane }}"
+          # A tag push means a beta build; workflow_dispatch chooses explicitly.
+          if [ -z "$LANE" ]; then LANE="ios_beta"; fi
+
+          case "$LANE" in
+            ios_beta)                 bundle exec fastlane ios beta changelog:"${{ github.event.inputs.changelog }}" ;;
+            ios_release)              bundle exec fastlane ios release ;;
+            mac_release)              bundle exec fastlane mac release ;;
+            mac_release_developer_id) bundle exec fastlane mac release_developer_id ;;
+            screenshots)              bundle exec fastlane ios screenshots ;;
+            *) echo "::error::Unknown lane: $LANE"; exit 1 ;;
+          esac
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ github.run_id }}
+          path: |
+            build/ios/**
+            build/mac-appstore/**
+            build/mac-developer-id/**
+            build/screenshots/**
+            build/logs/**
+          if-no-files-found: warn
+          retention-days: 14

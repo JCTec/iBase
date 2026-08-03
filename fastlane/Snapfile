@@ -1,0 +1,42 @@
+# snapshot configuration — `bundle exec fastlane ios screenshots`
+#
+# Device choice is deliberate. App Store Connect requires exactly two display families and derives
+# every other size from them (verified against Apple's screenshot specifications on 2026-08-03 —
+# see docs/RELEASE_AUTOMATION.md):
+#
+#   iPhone 6.9"  →  1260x2736, 1290x2796, or 1320x2868
+#   iPad 13"     →  2064x2752 or 2048x2732
+#
+# These two simulators capture natively at 1320x2868 and 2064x2752, both accepted sizes, so nothing
+# is ever rescaled — rescaling is the usual cause of soft or off-spec store images.
+
+devices([
+  "iPhone 17 Pro Max",      # 1320 x 2868 — satisfies iPhone 6.9"
+  "iPad Pro 13-inch (M5)"   # 2064 x 2752 — satisfies iPad 13"
+])
+
+# The app is not localized. Adding locales here before localizing the app produces N identical
+# English images under different locale folders, which looks like coverage and is not.
+languages(["en-US"])
+
+project("iBase.xcodeproj")
+scheme("iBase")
+
+output_directory("./build/screenshots")
+clear_previous_screenshots(true)
+
+# Content comes from -ShowcaseData (seeded in-memory store, throwaway defaults suite, no network).
+# -UITestScreenshotMode disables animations so a capture is never taken mid-transition.
+launch_arguments(["-ShowcaseData -UITestScreenshotMode"])
+
+only_testing(["iBaseUITests/ScreenshotUITests"])
+
+# 9:41, full battery, full signal — otherwise every image carries the runner's clock and a
+# half-empty battery, and two runs of the same commit differ.
+override_status_bar(true)
+
+concurrent_simulators(false) # deterministic ordering over speed
+stop_after_first_error(true) # a missing screen must fail the run, never ship a gap
+skip_open_summary(true)
+erase_simulator(true)        # start from a clean device every run
+dark_mode(true)              # the app is dark-only and forces .preferredColorScheme(.dark)
