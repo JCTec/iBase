@@ -3,6 +3,7 @@ import SwiftUI
 enum iBaseCoordinator: Hashable {
   case entry
   case history
+  case settings
 }
 
 /// The root owns the `NavigationPath` **and the workspace state** — the current value and the
@@ -14,6 +15,9 @@ struct iBaseNavigationView: View {
   @State private var path = NavigationPath()
   @State private var currentValue: UInt64 = Self.defaultValue
   @State private var selectedBase: Int = HistoryEntry.defaultBase
+  /// Workspace state, like the value and the base — the root owns it and every screen reads it
+  /// through the environment (docs/04 §2).
+  @State private var baseVisibility = BaseVisibilityStore.makeDefault()
 
   var body: some View {
     NavigationStack(path: self.$path) {
@@ -39,8 +43,12 @@ struct iBaseNavigationView: View {
               selectedBase: self.$selectedBase
             )
             .navigationTitle("History")
+          case .settings:
+            SettingsView(path: self.$path)
+              .navigationTitle("Settings")
         }
       }
     }
+    .environment(self.baseVisibility)
   }
 }
