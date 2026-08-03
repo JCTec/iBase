@@ -5,8 +5,6 @@ import SwiftData
 struct ReadoutView: View {
   static let baseReadoutFontSize: CGFloat = 92.0
   static let statusDotSize: CGFloat = 8.0
-  static let caretWidth: CGFloat = 4.0
-  static let caretHeightRatio: CGFloat = 0.62
   static let controlSize: CGFloat = 44.0
   static let readoutMinimumScaleFactor: CGFloat = 0.32
   static let sidebarMinimumWidth: CGFloat = 340.0
@@ -16,6 +14,7 @@ struct ReadoutView: View {
   @Binding var selectedBase: Int
 
   @Environment(\.modelContext) private var modelContext
+  @Environment(BaseVisibilityStore.self) private var baseVisibility
   #if !os(macOS)
   @Environment(\.horizontalSizeClass) private var horizontalSizeClass
   #endif
@@ -43,6 +42,15 @@ struct ReadoutView: View {
 
       ActionButton(
         action: {
+          self.openSettings()
+        },
+        imageName: "slider.horizontal.3",
+        accessibilityLabel: "Settings",
+        accessibilityIdentifier: "settingsButton"
+      )
+
+      ActionButton(
+        action: {
           self.openHistory()
         },
         imageName: "clock.arrow.circlepath",
@@ -67,24 +75,19 @@ struct ReadoutView: View {
         self.baseMenuView
       }
 
-      HStack(alignment: .center, spacing: .spacing.small) {
-        Text(Radix.string(from: self.currentValue, base: self.selectedBase))
-          .font(.system(size: self.readoutFontSize, weight: .bold, design: .monospaced))
-          .lineLimit(1)
-          .minimumScaleFactor(Self.readoutMinimumScaleFactor)
-          .monospacedDigit()
-          .contentTransition(.numericText())
-          .foregroundStyle(Color.text)
-          .accessibilityIdentifier("readoutValue")
-          .accessibilityValue("base \(self.selectedBase)")
-
-        RoundedRectangle(cornerRadius: .cornerRadius.small)
-          .fill(Color.accent)
-          .frame(width: Self.caretWidth, height: self.readoutFontSize * Self.caretHeightRatio)
-          .accessibilityHidden(true)
-
-        Spacer(minLength: 0)
-      }
+      // No caret here on purpose: a blinking bar next to the number reads as a text field, and
+      // the whole premise is that it is not one. The caret stays on EntryView, where you *are*
+      // typing. (Departs from the design PNG, which draws "2026|".)
+      Text(Radix.string(from: self.currentValue, base: self.selectedBase))
+        .font(.system(size: self.readoutFontSize, weight: .bold, design: .monospaced))
+        .lineLimit(1)
+        .minimumScaleFactor(Self.readoutMinimumScaleFactor)
+        .monospacedDigit()
+        .contentTransition(.numericText())
+        .foregroundStyle(Color.text)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityIdentifier("readoutValue")
+        .accessibilityValue("base \(self.selectedBase)")
 
       self.bitFieldView
     }
@@ -96,6 +99,12 @@ struct ReadoutView: View {
         .stroke(Color.text.opacity(0.14), lineWidth: .borderWidth.standard)
     )
     .animation(.spring(response: 0.24, dampingFraction: 0.82), value: self.currentValue)
+    // Tapping the card is the same as pressing ENTER VALUE — the card is the obvious thing to
+    // reach for, so it should not be inert. `contentShape` makes the padding tappable too.
+    .contentShape(RoundedRectangle(cornerRadius: .cornerRadius.medium))
+    .onTapGesture {
+      self.openEntry()
+    }
     .accessibilityElement(children: .contain)
   }
 
@@ -103,9 +112,24 @@ struct ReadoutView: View {
     BitFieldView(value: self.currentValue)
   }
 
+  @ViewBuilder
   private var baseRowsView: some View {
+    if self.baseVisibility.visibleDisplayBases.isEmpty {
+      ContentUnavailableView(
+        "No bases shown",
+        systemImage: "eye.slash",
+        description: Text("Turn bases on in Settings to see them here.")
+      )
+      .accessibilityElement(children: .combine)
+      .accessibilityIdentifier("noVisibleBasesView")
+    } else {
+      self.visibleBaseRowsView
+    }
+  }
+
+  private var visibleBaseRowsView: some View {
     VStack(spacing: .spacing.small) {
-      ForEach(Radix.displayBases, id: \.self) { base in
+      ForEach(self.baseVisibility.visibleDisplayBases, id: \.self) { base in
         BaseRowView(
           base: base,
           value: self.currentValue,
@@ -116,6 +140,7 @@ struct ReadoutView: View {
         )
       }
     }
+    .animation(.spring(response: 0.24, dampingFraction: 0.82), value: self.baseVisibility.visibleBases)
   }
 
   private var baseMenuView: some View {
@@ -222,6 +247,10 @@ struct ReadoutView: View {
 
   private func openHistory() {
     self.path.append(iBaseCoordinator.history)
+  }
+
+  private func openSettings() {
+    self.path.append(iBaseCoordinator.settings)
   }
 
   private func selectBase(_ base: Int) {
