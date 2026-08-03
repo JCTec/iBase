@@ -40,7 +40,7 @@ final class ScreenshotUITests: XCTestCase {
 
     // Hex, so the image shows live and dead keys together — the point of the screen.
     self.tap(app.buttons["entryBaseMenu"], describedAs: "the entry base menu")
-    self.tap(app.buttons["entryBaseOption-16"], describedAs: "base 16")
+    self.tapMenuOption(app.buttons["entryBaseOption-16"], describedAs: "base 16")
     self.tap(app.buttons["keypadKey-7"], describedAs: "digit 7")
     self.tap(app.buttons["keypadKey-E"], describedAs: "digit E")
 
@@ -133,6 +133,27 @@ final class ScreenshotUITests: XCTestCase {
     line: UInt = #line
   ) {
     self.require(element, describedAs: description, file: file, line: line)
+    element.tap()
+  }
+
+  /// A menu item is a different readiness problem from a screen element. The base menu lists all
+  /// 35 entry bases, so an item can legitimately exist while sitting below the popover's fold and
+  /// reporting `isHittable == false` until scrolled. XCUITest scrolls it into view as part of the
+  /// tap, so existence is the correct signal here — requiring hittability would be wrong, not
+  /// stricter.
+  private func tapMenuOption(
+    _ element: XCUIElement,
+    describedAs description: String,
+    timeout: TimeInterval = 30.0,
+    file: StaticString = #filePath,
+    line: UInt = #line
+  ) {
+    XCTAssertTrue(
+      element.waitForExistence(timeout: timeout),
+      "\(description) never appeared in the menu",
+      file: file,
+      line: line
+    )
     element.tap()
   }
 
