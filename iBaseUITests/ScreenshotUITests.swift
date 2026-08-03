@@ -26,7 +26,10 @@ final class ScreenshotUITests: XCTestCase {
 
     self.require(app.staticTexts["readoutValue"], describedAs: "the readout value")
     self.require(app.otherElements["bitFieldView"], describedAs: "the bit field")
-    self.require(app.buttons["baseRow-16"], describedAs: "the hex row")
+    // The first row, so it is on screen on every device. Asserting a row further down couples this
+    // check to how many bases happen to be visible — showcase mode turns all 36 on, which pushed
+    // the hex row below the iPhone fold and failed the capture.
+    self.require(app.buttons["baseRow-2"], describedAs: "the first base row")
 
     self.capture("01Readout")
   }
