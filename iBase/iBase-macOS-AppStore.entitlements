@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+	  Mac App Store channel.
+
+	  The App Sandbox is mandatory here — the Mac App Store rejects any app without it. iBase needs
+	  no exceptions to it: the app is entirely offline, keeps its data in its own container via
+	  SwiftData, reads no user files, and touches no hardware. So this is the minimum sandbox and
+	  nothing more; every additional entitlement is something a reviewer will ask you to justify.
+
+	  Do NOT sign a Developer ID build with this file. See iBase-macOS-DeveloperID.entitlements.
+
+	  When CloudKit sync ships, the iCloud entitlements go here (and here only) — they are
+	  App Store-authorised and cannot be carried by a Developer ID certificate:
+	    com.apple.developer.icloud-container-identifiers -> iCloud.com.JCTechnologies.iBase
+	    com.apple.developer.icloud-services              -> CloudKit
+	-->
+	<key>com.apple.security.app-sandbox</key>
+	<true/>
+</dict>
+</plist>
