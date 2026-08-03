@@ -1,0 +1,105 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Superseded runs are pointless — cancel them, but never cancel a push to main mid-flight.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+env:
+  XCODE_VERSION: "26.5"
+  PROJECT: iBase.xcodeproj
+  SCHEME: iBase
+
+jobs:
+  build-and-test:
+    name: ${{ matrix.name }}
+    runs-on: macos-26
+    timeout-minutes: 45
+    strategy:
+      # Every destination reports, so one platform's failure never hides another's.
+      fail-fast: false
+      matrix:
+        include:
+          - name: iPhone
+            destination: "platform=iOS Simulator,name=iPhone 17 Pro"
+            slug: iphone
+            testing: "-only-testing:iBaseTests -only-testing:iBaseUITests"
+          - name: iPad
+            destination: "platform=iOS Simulator,name=iPad Pro 13-inch (M5)"
+            slug: ipad
+            testing: "-only-testing:iBaseTests -only-testing:iBaseUITests/iBaseUITests/testConvertCommitReloadAndDeleteJourney"
+          - name: macOS
+            destination: "platform=macOS"
+            slug: macos
+            # UI tests are iOS-only in CI: the journey drives swipe-to-delete, which has no
+            # reliable AppKit equivalent. macOS still builds and runs the full unit suite.
+            testing: "-only-testing:iBaseTests"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: |
+          sudo xcode-select -s "/Applications/Xcode_${XCODE_VERSION}.app" 2>/dev/null \
+            || sudo xcode-select -s /Applications/Xcode.app
+          xcodebuild -version
+          swift --version
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate project
+        run: xcodegen generate
+
+      - name: List available simulators
+        if: matrix.slug != 'macos'
+        run: xcrun simctl list devices available
+
+      - name: Build
+        run: |
+          set -o pipefail
+          xcodebuild build-for-testing \
+            -project "$PROJECT" \
+            -scheme "$SCHEME" \
+            -destination "${{ matrix.destination }}" \
+            -resultBundlePath "artifacts/${{ matrix.slug }}-build.xcresult" \
+            -derivedDataPath DerivedData \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Test
+        env:
+          TEST_RUNNER_APPSTORE_SCREENSHOT_DIR: ${{ github.workspace }}/artifacts/screenshots/${{ matrix.slug }}
+        run: |
+          set -o pipefail
+          mkdir -p "$TEST_RUNNER_APPSTORE_SCREENSHOT_DIR"
+          xcodebuild test-without-building \
+            -project "$PROJECT" \
+            -scheme "$SCHEME" \
+            -destination "${{ matrix.destination }}" \
+            -resultBundlePath "artifacts/${{ matrix.slug }}-test.xcresult" \
+            -derivedDataPath DerivedData \
+            ${{ matrix.testing }} \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Upload result bundle (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcresult-${{ matrix.slug }}
+          path: artifacts/*.xcresult
+          retention-days: 7
+
+      - name: Upload screenshots (on success)
+        if: success() && matrix.slug != 'macos'
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots-${{ matrix.slug }}
+          path: artifacts/screenshots/${{ matrix.slug }}
+          if-no-files-found: warn
+          retention-days: 14
