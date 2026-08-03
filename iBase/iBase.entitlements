@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+	  Present from day one, CloudKit-ready but intentionally empty (docs/08).
+	  When sync ships, add:
+	    com.apple.developer.icloud-container-identifiers -> iCloud.com.JCTechnologies.iBase
+	    com.apple.developer.icloud-services            -> CloudKit
+	  HistoryEntry already carries a default on every stored property so the schema
+	  migrates without a rewrite (docs/04 §3).
+	-->
+</dict>
+</plist>

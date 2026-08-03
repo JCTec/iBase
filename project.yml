@@ -1,0 +1,155 @@
+name: iBase
+
+options:
+  bundleIdPrefix: com.JCTechnologies
+  deploymentTarget:
+    iOS: "26.0"
+    macOS: "26.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+  generateEmptyDirectories: true
+  xcodeVersion: "2650"
+
+settings:
+  base:
+    MARKETING_VERSION: "2.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    DEVELOPMENT_TEAM: ""
+    CODE_SIGN_STYLE: Automatic
+    SWIFT_TREAT_WARNINGS_AS_ERRORS: false
+    GCC_TREAT_WARNINGS_AS_ERRORS: false
+    ENABLE_USER_SCRIPT_SANDBOXING: true
+    DEAD_CODE_STRIPPING: true
+
+targets:
+  iBase:
+    type: application
+    supportedDestinations: [iOS, macOS]
+    deploymentTarget:
+      iOS: "26.0"
+      macOS: "26.0"
+    sources:
+      - path: iBase
+        excludes:
+          - "**/.DS_Store"
+          - "LaunchScreen.storyboard"
+      - path: iBase/LaunchScreen.storyboard
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.JCTechnologies.iBase
+        PRODUCT_NAME: iBase
+        INFOPLIST_FILE: iBase/Info.plist
+        CODE_SIGN_ENTITLEMENTS: iBase/iBase.entitlements
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: accent
+        # Semantic colors are surfaced as typed symbols (Color.panel, Color.dimmed …) rather than
+        # hard-coded in Swift (docs/05).
+        ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: YES
+        DEVELOPMENT_ASSET_PATHS: '"iBase/Preview Content"'
+        ENABLE_PREVIEWS: true
+        GENERATE_INFOPLIST_FILE: false
+        TARGETED_DEVICE_FAMILY: "1,2"
+        # Dark-only instrument panel: UIUserInterfaceStyle=Dark lives in iBase/Info.plist (docs/05, docs/08).
+        # A UIKit launch storyboard cannot compile for the mac destination; it is iOS-only by SDK.
+        "EXCLUDED_SOURCE_FILE_NAMES[sdk=macosx*]": LaunchScreen.storyboard
+        CODE_SIGN_IDENTITY: "-"
+        CODE_SIGNING_REQUIRED: "NO"
+        CODE_SIGNING_ALLOWED: "NO"
+      configs:
+        Debug:
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG
+      # macOS builds are unsandboxed-local only; entitlements stay CloudKit-ready but empty (docs/08).
+
+  iBaseTests:
+    type: bundle.unit-test
+    supportedDestinations: [iOS, macOS]
+    deploymentTarget:
+      iOS: "26.0"
+      macOS: "26.0"
+    sources:
+      - path: iBaseTests
+        excludes:
+          - "**/.DS_Store"
+    dependencies:
+      - target: iBase
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.JCTechnologies.iBase.tests
+        GENERATE_INFOPLIST_FILE: true
+        # Test bundles do not link AppIntents; without this the extractor warns on every build.
+        LM_SKIP_METADATA_EXTRACTION: YES
+        # The host executable sits at a different depth per platform (`Contents/MacOS` on Mac,
+        # the bundle root on iOS) — BUNDLE_EXECUTABLE_FOLDER_PATH resolves both.
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/iBase.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/iBase"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+        CODE_SIGN_IDENTITY: "-"
+        CODE_SIGNING_REQUIRED: "NO"
+        CODE_SIGNING_ALLOWED: "NO"
+
+  iBaseUITests:
+    type: bundle.ui-testing
+    supportedDestinations: [iOS, macOS]
+    deploymentTarget:
+      iOS: "26.0"
+      macOS: "26.0"
+    sources:
+      - path: iBaseUITests
+        excludes:
+          - "**/.DS_Store"
+    dependencies:
+      - target: iBase
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.JCTechnologies.iBase.uitests
+        GENERATE_INFOPLIST_FILE: true
+        # Test bundles do not link AppIntents; without this the extractor warns on every build.
+        LM_SKIP_METADATA_EXTRACTION: YES
+        TEST_TARGET_NAME: iBase
+        CODE_SIGN_IDENTITY: "-"
+        CODE_SIGNING_REQUIRED: "NO"
+        CODE_SIGNING_ALLOWED: "NO"
+
+schemes:
+  iBase:
+    build:
+      targets:
+        iBase: all
+        iBaseTests: [test]
+        iBaseUITests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      gatherCoverageData: true
+      coverageTargets:
+        - iBase
+      targets:
+        - name: iBaseTests
+          parallelizable: true
+        - name: iBaseUITests
+          parallelizable: false
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
+
+  iBase-UITests:
+    build:
+      targets:
+        iBase: all
+        iBaseUITests: [test]
+    run:
+      config: Debug
+      # Screenshot/demo runs launch the app straight into the seeded in-memory store (docs/07).
+      commandLineArguments:
+        "-ShowcaseData": true
+        "-UITesting": false
+    test:
+      config: Debug
+      targets:
+        - name: iBaseUITests
+          parallelizable: false
