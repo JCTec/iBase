@@ -33,6 +33,9 @@ struct EntryView: View {
   @Environment(\.modelContext) private var modelContext
 
   @State private var isPulsing = false
+  /// Hardware keyboards only deliver key presses to a focused view, so the typing surface claims
+  /// focus on appear and takes it back after every on-screen tap (which moves focus to the button).
+  @FocusState private var isKeyboardFocused: Bool
 
   @ScaledMetric private var typingFontSize: CGFloat = EntryView.baseTypingFontSize
 
@@ -231,6 +234,7 @@ struct EntryView: View {
     .toolbar(.hidden, for: .automatic)
     .focusable()
     .focusEffectDisabled()
+    .focused(self.$isKeyboardFocused)
     .onKeyPress(action: { keyPress in
       return self.handleKeyPress(keyPress)
     })
@@ -258,6 +262,7 @@ struct EntryView: View {
     .task {
       self.viewModel.base = self.selectedBase
       self.keyGenerator.prepare()
+      self.isKeyboardFocused = true
     }
   }
 
@@ -273,6 +278,7 @@ struct EntryView: View {
 
     self.keyGenerator.impactOccurred()
     self.viewModel.append(digit)
+    self.isKeyboardFocused = true
   }
 
   private func deleteLastDigit() {
@@ -280,10 +286,12 @@ struct EntryView: View {
 
     self.editGenerator.impactOccurred()
     self.viewModel.deleteLastDigit()
+    self.isKeyboardFocused = true
   }
 
   private func selectBase(_ base: Int) {
     self.editGenerator.impactOccurred()
+    self.isKeyboardFocused = true
 
     withAnimation(.spring(response: 0.24, dampingFraction: 0.82)) {
       self.viewModel.base = base
@@ -323,24 +331,31 @@ struct EntryView: View {
     }
   }
 
-  /// Hardware keyboard (iPad/Mac) goes through the same legality gate as the keypad (docs/06).
+  /// Hardware keyboard (iPad/Mac). This method only *translates* — every decision about what is
+  /// allowed comes from `ViewModel.command(for:)`, the same guards the on-screen keypad uses, so
+  /// the two input paths cannot drift apart (docs/06).
   private func handleKeyPress(_ keyPress: KeyPress) -> KeyPress.Result {
-    if keyPress.key == .delete || keyPress.key == .deleteForward {
-      self.deleteLastDigit()
-      return .handled
-    }
-
-    if keyPress.key == .return, self.viewModel.canCommit {
-      self.commit()
-      return .handled
-    }
-
-    guard let character = keyPress.characters.uppercased().first, self.viewModel.isLegal(character) else {
+    guard let input = ViewModel.KeyInput(keyPress) else {
       return .ignored
     }
 
-    self.appendDigit(character)
-    return .handled
+    switch self.viewModel.command(for: input) {
+      case .append(let digit):
+        self.appendDigit(digit)
+        return .handled
+      case .delete:
+        self.deleteLastDigit()
+        return .handled
+      case .commit:
+        self.commit()
+        return .handled
+      case .cancel:
+        self.close()
+        return .handled
+      case .ignore:
+        // Swallowed, not passed on: an illegal digit is a no-op, never a system error sound.
+        return .ignored
+    }
   }
 }
 
@@ -396,6 +411,40 @@ extension EntryView {
   }
 }
 
+// MARK: Keyboard input
+
+extension EntryView.ViewModel {
+  /// A keystroke, reduced to the only four things this screen cares about.
+  enum KeyInput: Equatable {
+    case character(Character)
+    case delete
+    case submit
+    case cancel
+
+    init?(_ keyPress: KeyPress) {
+      switch keyPress.key {
+        case .delete, .deleteForward:
+          self = .delete
+        case .return:
+          self = .submit
+        case .escape:
+          self = .cancel
+        default:
+          guard let character = keyPress.characters.first else { return nil }
+          self = .character(character)
+      }
+    }
+  }
+
+  enum KeyCommand: Equatable {
+    case append(Character)
+    case delete
+    case commit
+    case cancel
+    case ignore
+  }
+}
+
 // MARK: ViewModel
 
 extension EntryView {
@@ -436,6 +485,36 @@ extension EntryView {
     func deleteLastDigit() {
       guard !self.digits.isEmpty else { return }
       self.digits.removeLast()
+    }
+
+    /// What a keystroke should do. Pure and synchronous, so the hardware-keyboard policy is unit
+    /// tested on every platform — including the ones where XCUITest cannot drive a real keyboard.
+    func command(for input: KeyInput) -> KeyCommand {
+      switch input {
+        case .delete:
+          return self.digits.isEmpty ? .ignore : .delete
+        case .submit:
+          return self.canCommit ? .commit : .ignore
+        case .cancel:
+          return .cancel
+        case .character(let character):
+          return self.command(forTyped: character)
+      }
+    }
+
+    /// Typing folds to the uppercase alphabet the app uses everywhere, then runs the *same* two
+    /// guards as `append(_:)`: legal in this base, and still parseable afterwards.
+    private func command(forTyped character: Character) -> KeyCommand {
+      guard let digit = character.uppercased().first, self.isLegal(digit) else {
+        return .ignore
+      }
+
+      let candidate = self.digits + String(digit)
+      guard (try? Radix.value(from: candidate, base: self.base)) != nil else {
+        return .ignore // overflow
+      }
+
+      return .append(digit)
     }
 
     /// Throwing, centralized validation + persistence — the editor pattern's shape, applied to entry.
