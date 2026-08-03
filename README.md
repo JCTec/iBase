@@ -101,18 +101,16 @@ The `iBase-UITests` scheme runs the app with `-ShowcaseData` already set.
 Screenshots come from a command, never by hand, so they regenerate whenever the UI changes.
 
 ```sh
-# 1. capture
-TEST_RUNNER_APPSTORE_SCREENSHOT_DIR="$PWD/AppStoreAssets/captures" \
-  xcodebuild test -project iBase.xcodeproj -scheme iBase \
-  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
-  -only-testing:iBaseUITests/AppStoreScreenshotUITests
-
-# 2. compose into every required App Store dimension
-swift Scripts/generate_appstore_assets.swift
+bundle exec fastlane ios screenshots
 ```
 
-Output lands in `AppStoreAssets/<device>/` (iPhone 6.9" and 6.5", iPad 13", Mac). Marketing copy
-lives in the script, so localized or restyled variants regenerate with the artwork.
+That captures both devices with `snapshot` and then composes the branded store images.
+
+Raw captures land in `build/screenshots/`; the finished store images land in
+`AppStoreAssets/<device>/` — `iPhone-6.9` (1320×2868) and `iPad-13` (2064×2752), the only two
+families App Store Connect requires. Marketing copy lives in
+`Scripts/generate_appstore_assets.swift`, which auto-shrinks each headline to fit and **fails the
+run** rather than clipping it.
 
 ## Tests
 

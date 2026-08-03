@@ -198,9 +198,15 @@ platform :ios do
       derived_data_path: DERIVED_DATA
     )
 
-    frame_screenshots(path: "#{BUILD_DIR}/screenshots", use_platform: "IOS")
+    # frameit only adds a device bezel. The store images need background, eyebrow, and headline
+    # copy, which is what the composer draws — and it fails loudly if a headline cannot be fitted
+    # legibly rather than letting it collide with the device shot.
+    #
+    # Wrapped, not reimplemented: this script predates the fastlane work and already produces the
+    # branded output, so the lane calls it instead of duplicating it in Ruby.
+    sh("cd #{repo_root.shellescape} && swift Scripts/generate_appstore_assets.swift")
 
-    UI.success("Screenshots in #{BUILD_DIR}/screenshots")
+    UI.success("Raw captures in #{BUILD_DIR}/screenshots; store images in AppStoreAssets/")
   end
 
   desc "Build, sign, and upload a build to TestFlight"

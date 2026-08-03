@@ -42,6 +42,7 @@ enum Palette {
 // MARK: Specs
 
 struct DeviceSpec {
+  let simulatorName: String
   let folderName: String
   let size: CGSize
   /// Fraction of the canvas height reserved for the marketing copy above the device shot.
@@ -55,27 +56,42 @@ struct Caption {
 }
 
 let deviceSpecs = [
-  DeviceSpec(folderName: "iPhone-6.9", size: CGSize(width: 1320.0, height: 2868.0), headerHeightRatio: 0.22),
-  DeviceSpec(folderName: "iPhone-6.5", size: CGSize(width: 1242.0, height: 2688.0), headerHeightRatio: 0.22),
-  DeviceSpec(folderName: "iPad-13", size: CGSize(width: 2064.0, height: 2752.0), headerHeightRatio: 0.18),
-  DeviceSpec(folderName: "Mac", size: CGSize(width: 2880.0, height: 1800.0), headerHeightRatio: 0.20)
+  // `simulatorName` must match the devices in fastlane/Snapfile — that is where the captures come
+  // from. Both capture natively at an accepted size, so nothing is ever rescaled.
+  DeviceSpec(
+    simulatorName: "iPhone 17 Pro Max",
+    folderName: "iPhone-6.9",
+    size: CGSize(width: 1320.0, height: 2868.0),
+    headerHeightRatio: 0.26
+  ),
+  DeviceSpec(
+    simulatorName: "iPad Pro 13-inch (M5)",
+    folderName: "iPad-13",
+    size: CGSize(width: 2064.0, height: 2752.0),
+    headerHeightRatio: 0.22
+  )
 ]
 
 let captions = [
   Caption(
-    captureName: "01-readout",
+    captureName: "01Readout",
     eyebrow: "01 · READOUT",
     headline: "The number is a readout, not a text field."
   ),
   Caption(
-    captureName: "02-entry",
+    captureName: "02Entry",
     eyebrow: "02 · ENTRY",
     headline: "Digits illegal in the current base are dimmed and dead — not hidden."
   ),
   Caption(
-    captureName: "03-history",
+    captureName: "03History",
     eyebrow: "03 · HISTORY",
     headline: "Every value you commit stays, in the base you typed it."
+  ),
+  Caption(
+    captureName: "04Settings",
+    eyebrow: "04 · SETTINGS",
+    headline: "Show only the bases you use. Thirty-six are one switch away."
   )
 ]
 
@@ -92,7 +108,7 @@ func argumentValue(_ flag: String, default defaultValue: String) -> String {
 let fileManager = FileManager.default
 let repositoryRoot = URL(fileURLWithPath: fileManager.currentDirectoryPath)
 let inputDirectory = URL(
-  fileURLWithPath: argumentValue("--input", default: "AppStoreAssets/captures"),
+  fileURLWithPath: argumentValue("--input", default: "build/screenshots"),
   relativeTo: repositoryRoot
 )
 let outputDirectory = URL(
@@ -102,12 +118,56 @@ let outputDirectory = URL(
 
 // MARK: Drawing
 
-func loadCapture(named name: String) -> NSBitmapImageRep? {
-  let url = inputDirectory.appendingPathComponent("\(name).png")
+let locale = argumentValue("--locale", default: "en-US")
+
+/// snapshot writes `<output>/<locale>/<Simulator Name>-<CaptureName>.png`.
+func loadCapture(named name: String, for spec: DeviceSpec) -> NSBitmapImageRep? {
+  let url = inputDirectory
+    .appendingPathComponent(locale, isDirectory: true)
+    .appendingPathComponent("\(spec.simulatorName)-\(name).png")
   guard let data = try? Data(contentsOf: url), let representation = NSBitmapImageRep(data: data) else {
     return nil
   }
   return representation
+}
+
+/// Shrinks `string` until it actually fits `rect`, and refuses to draw if it cannot.
+///
+/// Drawing at a fixed point size and hoping is how a headline ends up colliding with the device
+/// shot below it — AppKit happily draws past the bottom of the rect it was given. Localised copy
+/// makes this worse: German and French routinely run 30-40% longer than English.
+func fittedFont(for string: String, startingAt maximumSize: CGFloat, in rect: NSRect, weight: NSFont.Weight) -> NSFont {
+  let minimumSize = maximumSize * 0.6
+  var size = maximumSize
+
+  while size >= minimumSize {
+    let font = NSFont.systemFont(ofSize: size, weight: weight)
+    let paragraphStyle = NSMutableParagraphStyle()
+    paragraphStyle.lineHeightMultiple = 1.08
+
+    let measured = NSAttributedString(string: string, attributes: [
+      .font: font,
+      .kern: -0.5,
+      .paragraphStyle: paragraphStyle
+    ]).boundingRect(
+      with: NSSize(width: rect.width, height: .greatestFiniteMagnitude),
+      options: [.usesLineFragmentOrigin]
+    )
+
+    if measured.height <= rect.height {
+      return font
+    }
+
+    size -= maximumSize * 0.04
+  }
+
+  FileHandle.standardError.write(Data("""
+  error: headline does not fit even at \(Int(minimumSize))pt:
+    "\(string)"
+  Shorten the copy, or raise headerHeightRatio for this device.
+
+  """.utf8))
+  exit(1)
 }
 
 func drawText(
@@ -180,7 +240,13 @@ func compose(caption: Caption, capture: NSBitmapImageRep, spec: DeviceSpec) -> D
     width: spec.size.width - margin * 2.0,
     height: headerHeight - margin - eyebrowFont.pointSize * 2.4
   )
-  drawText(caption.headline, font: headlineFont, color: Palette.text, tracking: -0.5, in: headlineRect)
+  let fittedHeadline = fittedFont(
+    for: caption.headline,
+    startingAt: headlineFont.pointSize,
+    in: headlineRect,
+    weight: .bold
+  )
+  drawText(caption.headline, font: fittedHeadline, color: Palette.text, tracking: -0.5, in: headlineRect)
 
   // Device shot: fit inside the remaining area, preserving aspect ratio.
   let stageRect = NSRect(
@@ -224,11 +290,8 @@ guard fileManager.fileExists(atPath: inputDirectory.path) else {
   FileHandle.standardError.write(Data("""
   error: no captures at \(inputDirectory.path)
 
-  Run the capture test first:
-    TEST_RUNNER_APPSTORE_SCREENSHOT_DIR="$PWD/AppStoreAssets/captures" \\
-      xcodebuild test -project iBase.xcodeproj -scheme iBase \\
-      -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \\
-      -only-testing:iBaseUITests/AppStoreScreenshotUITests
+  Capture first:
+    bundle exec fastlane ios screenshots
 
   """.utf8))
   exit(1)
@@ -241,7 +304,7 @@ for spec in deviceSpecs {
   try? fileManager.createDirectory(at: deviceDirectory, withIntermediateDirectories: true)
 
   for caption in captions {
-    guard let capture = loadCapture(named: caption.captureName) else {
+    guard let capture = loadCapture(named: caption.captureName, for: spec) else {
       print("skip  \(spec.folderName)/\(caption.captureName) — capture missing")
       continue
     }
