@@ -50,7 +50,19 @@ final class BaseVisibilityStore {
     }
 
     suite.removePersistentDomain(forName: suiteName)
-    return BaseVisibilityStore(store: suite)
+    let store = BaseVisibilityStore(store: suite)
+
+    // Marketing captures show every base at once — which is the app's whole pitch, and fills a 13"
+    // iPad instead of leaving two thirds of it empty. Rows running off the bottom edge is wanted
+    // here, not a defect: a list that continues past the frame implies depth.
+    // Showcase-only. The shipping default is still the five in `defaultVisibleBases`.
+    if launchArguments.contains("-ShowcaseData") {
+      Radix.displayBases.forEach { base in
+        store.setVisible(true, for: base)
+      }
+    }
+
+    return store
   }
 
   /// The rows the readout draws, in canonical order: 2–36 then Base64.
