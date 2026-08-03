@@ -1,0 +1,18 @@
+# Identifiers come from the environment, never literals, so this repository stays portable and
+# carries no account-specific data. Every value here is safe to be public — the *credentials* live
+# in the App Store Connect API key, which is never committed.
+#
+# Set these locally in a git-ignored `fastlane/.env` (see docs/RELEASE_AUTOMATION.md), or as CI
+# secrets/variables.
+
+app_identifier ENV["IBASE_APP_IDENTIFIER"] || "com.JCTechnologies.iBase"
+
+# Team IDs are genuinely unknown to this repository — DEVELOPMENT_TEAM is empty in project.yml.
+# Left nil rather than guessed: a wrong team ID fails deep inside a signing step with a confusing
+# message, whereas nil fails early and clearly.
+team_id ENV["IBASE_TEAM_ID"]
+itc_team_id ENV["IBASE_ITC_TEAM_ID"]
+
+for_platform :mac do
+  app_identifier ENV["IBASE_MAC_APP_IDENTIFIER"] || ENV["IBASE_APP_IDENTIFIER"] || "com.JCTechnologies.iBase"
+end

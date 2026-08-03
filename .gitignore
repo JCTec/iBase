@@ -53,3 +53,23 @@ Icon?
 *~.nib
 .idea/
 .vscode/
+
+# fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+fastlane/README.md
+vendor/bundle/
+.bundle/
+
+# Credential material — never commit any of these
+fastlane/.env
+fastlane/.env.*
+*.p8
+*.p12
+*.cer
+*.certSigningRequest
+*.mobileprovision
+*.provisionprofile
+AuthKey_*.p8
