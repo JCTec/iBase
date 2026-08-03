@@ -106,6 +106,10 @@ bundle exec fastlane ios screenshots
 
 That captures both devices with `snapshot` and then composes the branded store images.
 
+Inside Claude Code, `/appstore-assets` runs the same lane and then verifies the output — dimensions,
+clipped headlines, and stale screens are all checked by looking at the images, which is where every
+defect this pipeline has shipped was actually visible.
+
 Raw captures land in `build/screenshots/`; the finished store images land in
 `AppStoreAssets/<device>/` — `iPhone-6.9` (1320×2868) and `iPad-13` (2064×2752), the only two
 families App Store Connect requires. Marketing copy lives in
