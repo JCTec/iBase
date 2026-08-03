@@ -86,16 +86,47 @@ jobs:
             *) echo "::error::Unknown lane: $LANE"; exit 1 ;;
           esac
 
-      - name: Upload artifacts
+      # The store-ready images are the deliverable of the screenshots lane, so a missing file is an
+      # error here, not a warning. Kept as its own artifact so the download is a clean zip that goes
+      # straight to App Store Connect, with no build logs or raw captures mixed in.
+      - name: Upload App Store images
+        if: always() && github.event.inputs.lane == 'screenshots'
+        uses: actions/upload-artifact@v4
+        with:
+          name: appstore-images-${{ github.run_id }}
+          path: AppStoreAssets/**
+          if-no-files-found: error
+          retention-days: 30
+
+      # Raw captures, kept separately: useful for diagnosing a bad composite, not for uploading.
+      - name: Upload raw captures
+        if: always() && github.event.inputs.lane == 'screenshots'
+        uses: actions/upload-artifact@v4
+        with:
+          name: raw-captures-${{ github.run_id }}
+          path: build/screenshots/**
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload build products
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: release-${{ github.run_id }}
+          name: build-products-${{ github.run_id }}
           path: |
             build/ios/**
             build/mac-appstore/**
             build/mac-developer-id/**
-            build/screenshots/**
-            build/logs/**
-          if-no-files-found: warn
+          if-no-files-found: ignore
           retention-days: 14
+
+      - name: Upload logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: logs-${{ github.run_id }}
+          path: |
+            build/logs/**
+            build/test-results/**
+          if-no-files-found: ignore
+          retention-days: 7

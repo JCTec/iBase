@@ -142,6 +142,36 @@ its job — the binary carries the sandbox and nothing the certificate cannot au
 
 ---
 
+## Screenshots in CI
+
+Locally you run `/appstore-assets` (or `bundle exec fastlane ios screenshots`) and read the images
+off disk. CI cannot hand you a directory, so the images come back as **GitHub artifacts**.
+
+**Trigger.** `Actions → Release → Run workflow → lane: screenshots`. Deliberately not on push:
+the lane boots and erases two simulators and takes several minutes, and macOS runner minutes bill at
+a multiplier on private repositories.
+
+**What comes back**, as three separate artifacts rather than one bag:
+
+| Artifact | Contents | Retention | Missing files |
+|---|---|---|---|
+| `appstore-images-<run>` | `AppStoreAssets/` — the branded composites | 30 days | **error** |
+| `raw-captures-<run>` | `build/screenshots/` — unbranded captures | 7 days | **error** |
+| `logs-<run>` | build and test logs, on failure only | 7 days | ignored |
+
+They are split so the first one downloads as a clean zip that goes straight to App Store Connect,
+with no logs or intermediate captures mixed in. `if-no-files-found: error` on both means a lane that
+reports success while producing nothing still fails the run — silence is not success.
+
+**The images are still generated, not fetched.** `AppStoreAssets/` is git-ignored; CI regenerates it
+from real simulator captures on every run. Nothing is committed, so nothing can go stale.
+
+**Review them before uploading.** CI verifies dimensions and that files exist; it cannot tell that a
+screen is out of date or that a headline reads badly. That check is in
+`HUMAN_CHECKLIST-RELEASE.md`, and it is the one that has caught every real defect in this pipeline.
+
+---
+
 ## Known gaps
 
 Stated explicitly rather than left implicit.
