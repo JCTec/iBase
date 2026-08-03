@@ -55,20 +55,24 @@ signing path to protect, so Phase 3 is a greenfield decision rather than a migra
 that genuinely exists and is worth wrapping is the CI `xcodebuild` matrix, which the `test` lane
 mirrors exactly.
 
-### macOS: neither distribution channel is currently viable
+### macOS: what the two channels needed, and what was added
 
-`iBase/iBase.entitlements` is an **empty `<dict/>`** — deliberately so, per `docs/08`, as a
-CloudKit-ready placeholder. That means:
+`iBase/iBase.entitlements` was an **empty `<dict/>`** — deliberately so, per `docs/08`, as a
+CloudKit-ready placeholder. At discovery time that left *neither* macOS channel shippable:
 
-| Channel | Hard requirement | Present? |
-|---|---|---|
-| Mac App Store | `com.apple.security.app-sandbox` entitlement | **No** — App Sandbox is not enabled |
-| Developer ID + notarization | Hardened Runtime (`ENABLE_HARDENED_RUNTIME = YES`) | **No** — not set anywhere |
+| Channel | Hard requirement | At discovery | Now |
+|---|---|---|---|
+| Mac App Store | `com.apple.security.app-sandbox` | missing | `iBase-macOS-AppStore.entitlements` |
+| Developer ID + notarization | Hardened Runtime | missing | `ENABLE_HARDENED_RUNTIME[sdk=macosx*]: YES` |
 
-Both are small additions, and the app needs no privileged entitlements — it is entirely offline,
-with no network, no file access outside its container, and no hardware use. But neither channel
-works until its prerequisite is added, so the macOS lanes **assert these preconditions and fail with
-an actionable message** rather than producing an artifact that gets rejected or killed at launch.
+Both are now in place, and the iOS entitlements file is untouched — the macOS entitlements are wired
+per-SDK (`CODE_SIGN_ENTITLEMENTS[sdk=macosx*]`) so an iOS build never picks up a sandbox entitlement
+it has no use for.
+
+The app needs no privileged entitlements: it is entirely offline, keeps its data in its own
+container, reads no user files, and touches no hardware. The macOS lanes still **assert** their
+preconditions before building, so if either is ever removed the lane fails with the exact setting to
+restore rather than emitting a rejected — or kernel-killed — artifact.
 
 ### Ambiguities and the choice made
 

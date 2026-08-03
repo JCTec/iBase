@@ -217,6 +217,7 @@ platform :ios do
       scheme: SCHEME,
       configuration: "Release",
       export_method: "app-store",
+      destination: "generic/platform=iOS", # explicit: the target is multiplatform
       derived_data_path: DERIVED_DATA,
       output_directory: "#{BUILD_DIR}/ios",
       output_name: "#{SCHEME}.ipa",
@@ -248,6 +249,7 @@ platform :ios do
       scheme: SCHEME,
       configuration: "Release",
       export_method: "app-store",
+      destination: "generic/platform=iOS", # explicit: the target is multiplatform
       derived_data_path: DERIVED_DATA,
       output_directory: "#{BUILD_DIR}/ios",
       output_name: "#{SCHEME}.ipa",
@@ -289,7 +291,7 @@ platform :mac do
   lane :release do |options|
     ensure_project!
     assert_entitlements!(MAC_APP_STORE_ENTITLEMENTS, requires: "com.apple.security.app-sandbox",
-                         because: "the Mac App Store rejects any app that is not sandboxed")
+                         because: "The Mac App Store rejects any app that is not sandboxed")
     api_key = asc_api_key
     team_id = require_team_id!
     setup_signing!(type: "appstore")
@@ -299,6 +301,11 @@ platform :mac do
       scheme: SCHEME,
       configuration: "Release",
       export_method: "app-store",
+      # MUST be explicit. The app target is multiplatform (supportedDestinations: [iOS, macOS]), so
+      # gym cannot infer which one to archive and defaults to `generic/platform=iOS` — which then
+      # fails with "requires a provisioning profile", a message that says nothing about the real
+      # problem.
+      destination: "generic/platform=macOS",
       derived_data_path: DERIVED_DATA,
       output_directory: "#{BUILD_DIR}/mac-appstore",
       buildlog_path: "#{BUILD_DIR}/logs",
@@ -324,24 +331,35 @@ platform :mac do
   lane :release_developer_id do
     ensure_project!
     assert_entitlements!(MAC_DEVELOPER_ID_ENTITLEMENTS, forbids: "com.apple.developer.icloud",
-                         because: "a Developer ID certificate cannot authorise App Store-only " \
+                         because: "A Developer ID certificate cannot authorise App Store-only " \
                                   "entitlements, and the kernel kills the app at launch if it tries")
     assert_hardened_runtime!
     api_key = asc_api_key
     team_id = require_team_id!
     setup_signing!(type: "developer_id")
 
+    # The identity goes through gym's own `codesigning_identity` rather than xcargs: a value with a
+    # space in it ("Developer ID Application") does not survive being embedded in the xcargs string,
+    # and the build fails with a misleading "requires a provisioning profile".
     build_mac_app(
       project: PROJECT,
       scheme: SCHEME,
       configuration: "Release",
       export_method: "developer-id",
+      # See the note in `mac release` — multiplatform targets must name their destination.
+      destination: "generic/platform=macOS",
       derived_data_path: DERIVED_DATA,
       output_directory: "#{BUILD_DIR}/mac-developer-id",
       buildlog_path: "#{BUILD_DIR}/logs",
       export_team_id: team_id,
+      codesigning_identity: DEVELOPER_ID_IDENTITY,
+      export_options: {
+        signingStyle: "manual",
+        teamID: team_id,
+        signingCertificate: DEVELOPER_ID_IDENTITY
+      },
       xcargs: "DEVELOPMENT_TEAM=#{team_id} CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES " \
-              "ENABLE_HARDENED_RUNTIME=YES " \
+              "CODE_SIGN_STYLE=Manual ENABLE_HARDENED_RUNTIME=YES " \
               "CODE_SIGN_ENTITLEMENTS=#{MAC_DEVELOPER_ID_ENTITLEMENTS}"
     )
 
@@ -364,6 +382,7 @@ end
 
 # --- macOS helpers ------------------------------------------------------------------------------
 
+DEVELOPER_ID_IDENTITY         = ENV["IBASE_DEVELOPER_ID_IDENTITY"] || "Developer ID Application"
 MAC_APP_STORE_ENTITLEMENTS    = "iBase/iBase-macOS-AppStore.entitlements".freeze
 MAC_DEVELOPER_ID_ENTITLEMENTS = "iBase/iBase-macOS-DeveloperID.entitlements".freeze
 
@@ -378,13 +397,13 @@ def assert_entitlements!(relative_path, requires: nil, forbids: nil, because:)
 
   if requires && !contents.include?(requires)
     UI.user_error!(
-      "#{relative_path} does not declare #{requires}.\n#{because.capitalize}."
+      "#{relative_path} does not declare #{requires}.\n#{because}."
     )
   end
 
   if forbids && contents.include?(forbids)
     UI.user_error!(
-      "#{relative_path} declares #{forbids}, which this channel cannot carry.\n#{because.capitalize}."
+      "#{relative_path} declares #{forbids}, which this channel cannot carry.\n#{because}."
     )
   end
 end
