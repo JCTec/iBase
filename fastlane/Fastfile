@@ -86,6 +86,44 @@ def require_team_id!
   ENV["IBASE_TEAM_ID"]
 end
 
+# Signing strategy — the reasoning is in the "Signing" section of docs/RELEASE_AUTOMATION.md.
+#
+# match is the recommendation for CI and the only reliable way to hand a runner a signing identity.
+# It is deliberately NOT mandatory: this repository already builds and signs locally from the
+# certificates in the developer's keychain, and forcing match on a solo developer cutting releases
+# from one machine buys a second repository and a shared passphrase for nothing.
+#
+# So: use match when MATCH_GIT_URL is set, fall back to the local keychain when it is not — and
+# refuse to guess on CI, where there is no keychain worth falling back to.
+def setup_signing!(type:)
+  setup_ci if ENV["CI"]
+
+  if ENV["MATCH_GIT_URL"].to_s.strip.empty?
+    if ENV["CI"]
+      UI.user_error!(
+        "Running on CI with no signing identity.\n" \
+        "Set MATCH_GIT_URL and MATCH_PASSWORD, or this lane cannot sign anything.\n" \
+        "See the \"Signing\" section of docs/RELEASE_AUTOMATION.md."
+      )
+    end
+
+    UI.important(
+      "MATCH_GIT_URL is not set — signing with the identities already in this machine's keychain.\n" \
+      "Fine for a local release. For CI, set up match."
+    )
+    return
+  end
+
+  require_env!("MATCH_PASSWORD")
+
+  match(
+    type: type,
+    readonly: true, # lanes consume certificates; they never mint or revoke them
+    git_url: ENV["MATCH_GIT_URL"],
+    api_key: asc_api_key
+  )
+end
+
 # --- Cross-platform validation -----------------------------------------------------------------
 
 desc "Build and run the full validation suite on every platform this project targets"
@@ -136,6 +174,17 @@ lane :test do
   UI.success("All platforms validated.")
 end
 
+desc "Fetch signing certificates and profiles via match (read-only). Requires MATCH_GIT_URL."
+lane :certificates do
+  require_env!("MATCH_GIT_URL", "MATCH_PASSWORD")
+
+  ["appstore", "development", "developer_id"].each do |type|
+    match(type: type, readonly: true, git_url: ENV["MATCH_GIT_URL"], api_key: asc_api_key)
+  end
+
+  UI.success("Certificates and profiles are in place.")
+end
+
 # --- iOS ----------------------------------------------------------------------------------------
 
 platform :ios do
@@ -159,6 +208,7 @@ platform :ios do
     ensure_project!
     api_key = asc_api_key
     team_id = require_team_id!
+    setup_signing!(type: "appstore")
 
     increment_build_number_if_requested(options)
 
@@ -191,6 +241,7 @@ platform :ios do
     ensure_project!
     api_key = asc_api_key
     team_id = require_team_id!
+    setup_signing!(type: "appstore")
 
     build_app(
       project: PROJECT,
@@ -241,6 +292,7 @@ platform :mac do
                          because: "the Mac App Store rejects any app that is not sandboxed")
     api_key = asc_api_key
     team_id = require_team_id!
+    setup_signing!(type: "appstore")
 
     build_mac_app(
       project: PROJECT,
@@ -277,6 +329,7 @@ platform :mac do
     assert_hardened_runtime!
     api_key = asc_api_key
     team_id = require_team_id!
+    setup_signing!(type: "developer_id")
 
     build_mac_app(
       project: PROJECT,

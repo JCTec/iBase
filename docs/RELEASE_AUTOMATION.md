@@ -88,6 +88,56 @@ an actionable message** rather than producing an artifact that gets rejected or 
 
 ---
 
+## Signing
+
+**Decision: match is recommended for CI, but is not mandatory, and this repository does not migrate
+to it now.**
+
+The prompt's own caution applies directly here: match introduces a second repository and a shared
+passphrase to manage, and should not be adopted unless CI signing is actually wanted. Two facts from
+this machine shaped the call:
+
+| Identity present locally | Can sign |
+|---|---|
+| `Developer ID Application: … (S8662L649U)` | macOS Developer ID builds — **verified working** |
+| `Apple Development: … (U8TS5JBA8Z)` | development builds only |
+| *(no Apple Distribution certificate)* | App Store builds cannot be signed on this machine |
+
+So a **local** Developer ID release works today with no match repository at all, while **any** App
+Store upload — iOS or Mac — needs a distribution certificate that does not yet exist.
+
+`setup_signing!` therefore does the honest thing rather than picking one and imposing it:
+
+- **`MATCH_GIT_URL` set** → `match(readonly: true)` fetches the identity. Read-only on purpose:
+  release lanes consume certificates, they never mint or revoke them.
+- **not set, running locally** → falls back to the keychain, with a warning. This is the solo-
+  developer case the prompt says match is overkill for.
+- **not set, running on CI** → **fails loudly.** A CI runner has no keychain worth falling back to,
+  and silently producing an unsigned artifact is exactly the failure this pipeline exists to prevent.
+
+Run `bundle exec fastlane certificates` to populate a machine once `MATCH_GIT_URL` exists.
+
+### What was actually verified
+
+A real Developer ID archive was produced locally, with no Xcode UI involved:
+
+```
+Authority=Developer ID Application: Juan Carlos Estevez Rodriguez (S8662L649U)
+Authority=Developer ID Certification Authority
+Authority=Apple Root CA
+TeamIdentifier=S8662L649U
+CodeDirectory … flags=0x10000(runtime)          ← Hardened Runtime on
+Entitlements: com.apple.security.app-sandbox only ← no App Store-only entitlements
+… valid on disk
+… satisfies its Designated Requirement
+```
+
+That confirms three things at once: the certificate chain is real, Hardened Runtime is applied (so
+notarization will not be refused for its absence), and the Developer ID entitlements file is doing
+its job — the binary carries the sandbox and nothing the certificate cannot authorise.
+
+---
+
 ## Known gaps
 
 Stated explicitly rather than left implicit.

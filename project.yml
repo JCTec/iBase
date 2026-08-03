@@ -54,6 +54,13 @@ targets:
         # Dark-only instrument panel: UIUserInterfaceStyle=Dark lives in iBase/Info.plist (docs/05, docs/08).
         # A UIKit launch storyboard cannot compile for the mac destination; it is iOS-only by SDK.
         "EXCLUDED_SOURCE_FILE_NAMES[sdk=macosx*]": LaunchScreen.storyboard
+        # macOS release prerequisites (docs/RELEASE_AUTOMATION.md).
+        # Hardened Runtime: Apple refuses to notarize without it, and the error it returns is
+        # unhelpfully generic — so it is on for every macOS build, not just the Developer ID one.
+        "ENABLE_HARDENED_RUNTIME[sdk=macosx*]": YES
+        # Defaults to the App Store shape (sandboxed). The Developer ID lane overrides this via
+        # xcargs, because the two channels' entitlements are NOT interchangeable.
+        "CODE_SIGN_ENTITLEMENTS[sdk=macosx*]": iBase/iBase-macOS-AppStore.entitlements
         CODE_SIGN_IDENTITY: "-"
         CODE_SIGNING_REQUIRED: "NO"
         CODE_SIGNING_ALLOWED: "NO"
