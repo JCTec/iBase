@@ -1,40 +1,35 @@
 name: Release
 
-# Deliberate triggers only. macOS runner minutes bill at a 10x multiplier on private repositories,
-# and these lanes upload to Apple — neither belongs on every push.
+# Cutting a release means: validate everything, then produce the store screenshots.
+#
+# It does NOT build, sign, or upload anything. No .ipa, no .app, no TestFlight, no App Store
+# upload — distribution is done locally from a machine whose keychain holds the certificates. That
+# is why this workflow needs no secrets at all.
 on:
-  workflow_dispatch:
-    inputs:
-      lane:
-        description: "Which release lane to run"
-        required: true
-        type: choice
-        options:
-          - ios_beta
-          - ios_release
-          - mac_release
-          - mac_release_developer_id
-          - screenshots
-      changelog:
-        description: "TestFlight changelog (ios_beta only; defaults to the commit subject)"
-        required: false
-        type: string
   push:
     tags:
       - "v*"
+  workflow_dispatch:
 
 concurrency:
+  # Two tag runs racing for the same simulators would interfere with each other.
   group: release-${{ github.ref }}
-  cancel-in-progress: false # never cancel a run that may already have uploaded to Apple
+  cancel-in-progress: false
 
 env:
   XCODE_VERSION: "26.5"
+  # fastlane introspects the project with `xcodebuild -showBuildSettings`, defaulting to a 3-second
+  # base timeout and 4 retries. A loaded runner with this multiplatform project blows past 24s and
+  # the lane dies before running a single test — which is exactly how run 30864842779 failed.
+  # Raw xcodebuild (ci.yml) is unaffected; this is a fastlane-only default.
+  FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT: "180"
+  FASTLANE_XCODEBUILD_SETTINGS_RETRIES: "5"
 
 jobs:
   release:
-    name: ${{ github.event.inputs.lane || 'ios_beta (tag)' }}
+    name: Validate and capture screenshots
     runs-on: macos-26
-    timeout-minutes: 90
+    timeout-minutes: 60
 
     steps:
       - name: Checkout
@@ -57,7 +52,9 @@ jobs:
           ruby-version: "3.3"
           bundler-cache: true
 
-      # Same cold-simulator race the CI iPad leg hit: boot and settle before any app launch.
+      # A cold simulator racing the first app launch produced "Timed out while launching application
+      # via Xcode" on a loaded runner. Booting and settling first removes the race — and this job
+      # drives three simulators, so it matters more here than anywhere.
       - name: Boot simulators
         run: |
           for device in "iPhone 17 Pro" "iPhone 17 Pro Max" "iPad Pro 13-inch (M5)"; do
@@ -68,47 +65,22 @@ jobs:
               xcrun simctl boot "$UDID" || true
               xcrun simctl bootstatus "$UDID" -b || true
             else
-              echo "::warning::$device not available on this runner image"
+              echo "::error::$device is not available on this runner image"
+              exit 1
             fi
           done
 
-      # Validation before anything is signed or uploaded. A build that does not pass its own tests
-      # has no business reaching TestFlight.
+      # Validation first. Screenshots of a build that does not pass its own tests are worthless.
       - name: Validate
         run: bundle exec fastlane test
 
-      - name: Run release lane
-        env:
-          # App Store Connect API key — never an Apple ID and password.
-          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
-          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
-          ASC_KEY_CONTENT: ${{ secrets.ASC_KEY_CONTENT }}
-          IBASE_TEAM_ID: ${{ secrets.IBASE_TEAM_ID }}
-          IBASE_ITC_TEAM_ID: ${{ secrets.IBASE_ITC_TEAM_ID }}
-          # match. Required on CI: setup_signing! refuses to fall back to a keychain that is not there.
-          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
-          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
-          MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
-          FASTLANE_HIDE_CHANGELOG: "true"
-        run: |
-          LANE="${{ github.event.inputs.lane }}"
-          # A tag push means a beta build; workflow_dispatch chooses explicitly.
-          if [ -z "$LANE" ]; then LANE="ios_beta"; fi
+      - name: Capture and compose screenshots
+        run: bundle exec fastlane ios screenshots
 
-          case "$LANE" in
-            ios_beta)                 bundle exec fastlane ios beta changelog:"${{ github.event.inputs.changelog }}" ;;
-            ios_release)              bundle exec fastlane ios release ;;
-            mac_release)              bundle exec fastlane mac release ;;
-            mac_release_developer_id) bundle exec fastlane mac release_developer_id ;;
-            screenshots)              bundle exec fastlane ios screenshots ;;
-            *) echo "::error::Unknown lane: $LANE"; exit 1 ;;
-          esac
-
-      # The store-ready images are the deliverable of the screenshots lane, so a missing file is an
-      # error here, not a warning. Kept as its own artifact so the download is a clean zip that goes
-      # straight to App Store Connect, with no build logs or raw captures mixed in.
+      # The deliverable. `error` on missing files, because a lane that reports success while
+      # producing nothing must fail the run — silence is not success.
       - name: Upload App Store images
-        if: always() && github.event.inputs.lane == 'screenshots'
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: appstore-images-${{ github.run_id }}
@@ -116,27 +88,16 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-      # Raw captures, kept separately: useful for diagnosing a bad composite, not for uploading.
+      # Unbranded captures, kept separately: useful for diagnosing a bad composite, not for
+      # uploading to App Store Connect.
       - name: Upload raw captures
-        if: always() && github.event.inputs.lane == 'screenshots'
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: raw-captures-${{ github.run_id }}
           path: build/screenshots/**
           if-no-files-found: error
           retention-days: 7
-
-      - name: Upload build products
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-products-${{ github.run_id }}
-          path: |
-            build/ios/**
-            build/mac-appstore/**
-            build/mac-developer-id/**
-          if-no-files-found: ignore
-          retention-days: 14
 
       - name: Upload logs
         if: failure()

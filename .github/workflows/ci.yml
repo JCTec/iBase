@@ -96,11 +96,8 @@ jobs:
             CODE_SIGNING_ALLOWED=NO
 
       - name: Test
-        env:
-          TEST_RUNNER_APPSTORE_SCREENSHOT_DIR: ${{ github.workspace }}/artifacts/screenshots/${{ matrix.slug }}
         run: |
           set -o pipefail
-          mkdir -p "$TEST_RUNNER_APPSTORE_SCREENSHOT_DIR"
           xcodebuild test-without-building \
             -project "$PROJECT" \
             -scheme "$SCHEME" \
@@ -118,12 +115,3 @@ jobs:
           name: xcresult-${{ matrix.slug }}
           path: artifacts/*.xcresult
           retention-days: 7
-
-      - name: Upload screenshots (on success)
-        if: success() && matrix.slug != 'macos'
-        uses: actions/upload-artifact@v4
-        with:
-          name: screenshots-${{ matrix.slug }}
-          path: artifacts/screenshots/${{ matrix.slug }}
-          if-no-files-found: warn
-          retention-days: 14
