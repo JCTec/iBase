@@ -48,16 +48,15 @@ open iBase.xcodeproj
 
 ## CI
 
-[`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs on every push to `main` and every pull
-request, across three destinations with `fail-fast` off so each one reports independently:
+Two workflows, neither of which needs a secret:
 
-| Destination | What runs |
-|---|---|
-| `platform=iOS Simulator,name=iPhone 17 Pro` | unit tests + all UI tests |
-| `platform=iOS Simulator,name=iPad Pro 13-inch (M5)` | unit tests + the end-to-end journey and the settings journey |
-| `platform=macOS` | build + unit tests |
+| Workflow | Trigger | Runs | Artifacts |
+|---|---|---|---|
+| `ci.yml` | push to `main`, PR | tests on iPhone sim, iPad sim, and macOS | result bundles, on failure only |
+| `release.yml` | `v*` tag, manual dispatch | full tests, then App Store screenshots | branded store images + raw captures |
 
-Result bundles upload as artifacts when a job fails; captured screenshots upload when it succeeds.
+CI does not build, sign, or upload the app — distribution is done locally from Xcode. See
+[`docs/RELEASE_AUTOMATION.md`](docs/RELEASE_AUTOMATION.md).
 
 ### Running the same commands locally
 
