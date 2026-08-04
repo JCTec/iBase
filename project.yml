@@ -17,7 +17,7 @@ options:
 settings:
   base:
     MARKETING_VERSION: "2.0.0"
-    CURRENT_PROJECT_VERSION: "4"
+    CURRENT_PROJECT_VERSION: "5"
     SWIFT_VERSION: "6.0"
     SWIFT_STRICT_CONCURRENCY: complete
     # Signing lives here, not in Xcode's UI: the .xcodeproj is generated output, so anything set
