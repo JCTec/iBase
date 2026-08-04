@@ -22,7 +22,8 @@ The project's live checklist. Every box ticks before shipping; any unticked box 
 ## Visual & motion
 
 - [ ] System **monospaced** type app-wide; `@ScaledMetric` + `.contentTransition(.numericText())` on every changing value
-- [ ] Dark-only palette passes design-time WCAG check (text/accent on background/panel; dimmed ≥ large-text floor)
+- [x] Dark-only palette passes design-time WCAG AA: text 17.6:1 and accent 10.5:1 on background; `dimmed` 5.2:1 — small-text floor, since it is used on caption-sized labels
+- [x] Interactive rows meet the 44pt minimum hit target (base rows 44, keypad keys 56, settings rows 56)
 - [ ] Flat panels with hairline low-opacity strokes; opacity texture system (0.08 / 0.12 / 0.14–0.18)
 - [ ] Bit field collapses at 16/32/64 boundaries; set bits in accent; width change animates
 - [ ] Springs only (response 0.18–0.28, damping 0.68–0.86), tied to real events

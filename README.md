@@ -36,7 +36,12 @@ README only describes how to build and test.
 - Xcode 26.5 or later (iOS 26 / macOS 26 SDKs)
 - [XcodeGen](https://github.com/yonaskolb/XcodeGen) — `brew install xcodegen`
 
-`project.yml` is the source of truth; `iBase.xcodeproj` is generated and git-ignored.
+`project.yml` is the source of truth; `iBase.xcodeproj` is generated and git-ignored. That includes
+signing and versions — settings changed through Xcode's UI are discarded by the next
+`xcodegen generate`, so edit `project.yml` instead.
+
+Privacy policy: <https://pdfhost.io/v/Quvw53LjUd_iBase-Privacy-Policy> (source:
+`iBase-Privacy-Policy.pdf`). Store copy and identifiers live in [`docs/10-StoreListing.md`](docs/10-StoreListing.md).
 
 ## Build
 
