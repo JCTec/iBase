@@ -59,6 +59,9 @@ jobs:
       - name: Set up Ruby and bundler cache
         uses: ruby/setup-ruby@v1
         with:
+          # Explicit: the action errors out with "input ruby-version needs to be specified" when
+          # there is no .ruby-version or .tool-versions file, which this repository does not carry.
+          ruby-version: "3.3"
           bundler-cache: true
 
       - name: Generate project
