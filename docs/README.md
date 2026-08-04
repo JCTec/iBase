@@ -16,6 +16,7 @@ App-specific build documentation for **iBase**, a live number-base converter (ba
 | `07-Testing.md` | Unit tests, the end-to-end UI journey, previews, launch flags |
 | `08-Tooling.md` | App Intents, App Store screenshot automation |
 | `09-Checklist.md` | iBase's live shipping checklist |
+| `10-StoreListing.md` | Privacy policy URL, store copy, identifiers |
 
 ## How to use
 

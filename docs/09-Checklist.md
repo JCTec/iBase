@@ -22,7 +22,8 @@ The project's live checklist. Every box ticks before shipping; any unticked box 
 ## Visual & motion
 
 - [ ] System **monospaced** type app-wide; `@ScaledMetric` + `.contentTransition(.numericText())` on every changing value
-- [ ] Dark-only palette passes design-time WCAG check (text/accent on background/panel; dimmed ≥ large-text floor)
+- [x] Dark-only palette passes design-time WCAG AA: text 17.6:1 and accent 10.5:1 on background; `dimmed` 5.2:1 — small-text floor, since it is used on caption-sized labels
+- [x] Interactive rows meet the 44pt minimum hit target (base rows 44, keypad keys 56, settings rows 56)
 - [ ] Flat panels with hairline low-opacity strokes; opacity texture system (0.08 / 0.12 / 0.14–0.18)
 - [ ] Bit field collapses at 16/32/64 boundaries; set bits in accent; width change animates
 - [ ] Springs only (response 0.18–0.28, damping 0.68–0.86), tied to real events
@@ -54,6 +55,7 @@ The project's live checklist. Every box ticks before shipping; any unticked box 
 - [ ] `#Preview` on every feature view, seeded with edge cases (0, `UInt64.max`, base 2, base 36)
 - [ ] Scripted App Store screenshots (capture test + composition script, incl. Mac size)
 - [ ] `OpeniBaseIntent` + shortcuts phrases wired
+- [x] Localized in English (source) and Spanish: 62 units across `Localizable`/`InfoPlist`/`AppShortcuts` string catalogs, zero untranslated. Radix notation (`BIN`/`OCT`/`DEC`/`HEX`/`B64`/`BASE64` and all digit output) and accessibility identifiers are excluded on purpose — the first is notation, the second is a test hook. Unit suite and the UI journey pass under `-AppleLanguages (es)`
 
 ## Struck from the template (with reasons — see `00`)
 

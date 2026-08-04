@@ -47,7 +47,8 @@ final class ScreenshotUITests: XCTestCase {
     self.tap(app.buttons["keypadKey-7"], describedAs: "digit 7")
     self.tap(app.buttons["keypadKey-E"], describedAs: "digit E")
 
-    self.waitForLabel("= 126₁₀ so far", on: app.staticTexts["previewLabel"])
+    // The visible text is translated; the accessibility value is the decimal number alone.
+    self.waitForValue("126", on: app.staticTexts["previewLabel"])
 
     self.capture("02Entry")
   }
@@ -160,20 +161,20 @@ final class ScreenshotUITests: XCTestCase {
     element.tap()
   }
 
-  private func waitForLabel(
-    _ label: String,
+  private func waitForValue(
+    _ value: String,
     on element: XCUIElement,
     timeout: TimeInterval = 15.0,
     file: StaticString = #filePath,
     line: UInt = #line
   ) {
     let expectation = XCTNSPredicateExpectation(
-      predicate: NSPredicate(format: "label == %@", label),
+      predicate: NSPredicate(format: "value == %@", value),
       object: element
     )
 
     guard XCTWaiter().wait(for: [expectation], timeout: timeout) == .completed else {
-      return XCTFail("expected label \"\(label)\", found \"\(element.label)\"", file: file, line: line)
+      return XCTFail("expected value \"\(value)\", found \"\(element.value ?? "")\"", file: file, line: line)
     }
   }
 

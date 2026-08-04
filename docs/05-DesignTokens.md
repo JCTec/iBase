@@ -92,9 +92,9 @@ VStack(alignment: .leading, spacing: .spacing.small) { … }
   | `panel` | Cards, input surfaces | `#131316` |
   | `text` | Primary text/digits | `#F2F2F0` off-white |
   | `accent` | The one green — live digits, set bits, cursor, tint | `#7ED321`-family lime |
-  | `dimmed` | Secondary labels, illegal keypad digits, unset bits | `text` at 0.35–0.45 |
+  | `dimmed` | Secondary labels, illegal keypad digits, unset bits | `text` at 0.52 |
 
   Reference values come from the design PNG; sample the final artwork before committing them, but the *names* are fixed.
 
-- **Contrast is a design-time gate, not runtime code:** `text`/`accent` on `background`/`panel` must pass WCAG AA; `dimmed` must stay ≥ the large-text floor while still reading as "dead". Verify once, in review, per `09`.
+- **Contrast is a design-time gate, not runtime code:** `text`/`accent` on `background`/`panel` must pass WCAG AA. `dimmed` must clear **4.5:1 — the small-text floor, not the large-text one** — because it is applied to `.caption`/`.caption2` labels (`MSB · 15`, `8 BITS SET`, base labels) and to dead keypad digits over the 0.04 fill. At 0.40 it measured 3.5:1 and failed; 0.52 measures 5.2:1 on `background`/`panel` and 5.0:1 on a dead key, and still reads as secondary. Verify once, in review, per `09`.
 - **Opacity is the texture system:** chrome fills `0.08`, pressed/active key fills `0.12`, hairline strokes `0.14`–`0.18`, secondary text `0.72`–`0.82` — always derived from `text` or `accent`, never new colors.

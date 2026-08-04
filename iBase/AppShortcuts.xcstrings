@@ -1,0 +1,40 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Convert a number with ${applicationName}" : {
+      "comment" : "Siri phrase. ${applicationName} is substituted by the system and must be kept verbatim.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Convert a number with ${applicationName}"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Convertir un número con ${applicationName}"
+          }
+        }
+      }
+    },
+    "Open ${applicationName}" : {
+      "comment" : "Siri phrase. ${applicationName} is substituted by the system and must be kept verbatim.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open ${applicationName}"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir ${applicationName}"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

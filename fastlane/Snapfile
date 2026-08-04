@@ -15,8 +15,10 @@ devices([
   "iPad Pro 13-inch (M5)"   # 2064 x 2752 — satisfies iPad 13"
 ])
 
-# The app is not localized. Adding locales here before localizing the app produces N identical
-# English images under different locale folders, which looks like coverage and is not.
+# The app now ships English and Spanish. Adding "es-MX" here captures a second, genuinely different
+# set of images — it is a deliberate release decision (twice the run time, twice the images to
+# review), not something to switch on by default, so it stays off until the Spanish store listing
+# is being submitted.
 languages(["en-US"])
 
 project("iBase.xcodeproj")

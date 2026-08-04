@@ -9,19 +9,29 @@ options:
   groupSortPosition: top
   generateEmptyDirectories: true
   xcodeVersion: "2650"
+  # English is the source language of `iBase/Localizable.xcstrings`; every other region is a
+  # translation of it. The set of shipped languages is the catalog's, not a list kept in parallel
+  # here — `xcstringstool` compiles one `.lproj` per localization it finds at build time.
+  developmentLanguage: en
 
 settings:
   base:
     MARKETING_VERSION: "2.0.0"
-    CURRENT_PROJECT_VERSION: "1"
+    CURRENT_PROJECT_VERSION: "4"
     SWIFT_VERSION: "6.0"
     SWIFT_STRICT_CONCURRENCY: complete
-    DEVELOPMENT_TEAM: ""
+    # Signing lives here, not in Xcode's UI: the .xcodeproj is generated output, so anything set
+    # through the Signing & Capabilities tab is discarded on the next `xcodegen generate`.
+    DEVELOPMENT_TEAM: S8662L649U
     CODE_SIGN_STYLE: Automatic
     SWIFT_TREAT_WARNINGS_AS_ERRORS: false
     GCC_TREAT_WARNINGS_AS_ERRORS: false
     ENABLE_USER_SCRIPT_SANDBOXING: true
     DEAD_CODE_STRIPPING: true
+    # The compiler extracts every `LocalizedStringKey`/`LocalizedStringResource`/`String(localized:)`
+    # literal into the String Catalog on each build — so the catalog is generated output too, and no
+    # string is ever registered by hand.
+    SWIFT_EMIT_LOC_STRINGS: YES
 
 targets:
   iBase:
@@ -54,9 +64,8 @@ targets:
         # Dark-only instrument panel: UIUserInterfaceStyle=Dark lives in iBase/Info.plist (docs/05, docs/08).
         # A UIKit launch storyboard cannot compile for the mac destination; it is iOS-only by SDK.
         "EXCLUDED_SOURCE_FILE_NAMES[sdk=macosx*]": LaunchScreen.storyboard
-        CODE_SIGN_IDENTITY: "-"
-        CODE_SIGNING_REQUIRED: "NO"
-        CODE_SIGNING_ALLOWED: "NO"
+        # Signing is NOT disabled here: that would block running on a real device. CI and fastlane
+        # pass CODE_SIGNING_ALLOWED=NO on the xcodebuild command line for their simulator/macOS runs.
       configs:
         Debug:
           SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG
@@ -84,9 +93,6 @@ targets:
         # the bundle root on iOS) — BUNDLE_EXECUTABLE_FOLDER_PATH resolves both.
         TEST_HOST: "$(BUILT_PRODUCTS_DIR)/iBase.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/iBase"
         BUNDLE_LOADER: "$(TEST_HOST)"
-        CODE_SIGN_IDENTITY: "-"
-        CODE_SIGNING_REQUIRED: "NO"
-        CODE_SIGNING_ALLOWED: "NO"
 
   iBaseUITests:
     type: bundle.ui-testing
@@ -111,9 +117,6 @@ targets:
         # Test bundles do not link AppIntents; without this the extractor warns on every build.
         LM_SKIP_METADATA_EXTRACTION: YES
         TEST_TARGET_NAME: iBase
-        CODE_SIGN_IDENTITY: "-"
-        CODE_SIGNING_REQUIRED: "NO"
-        CODE_SIGNING_ALLOWED: "NO"
 
 schemes:
   iBase:

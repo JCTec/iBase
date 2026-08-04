@@ -4,7 +4,8 @@ extension ReadoutView {
   /// One row per base 2–36 plus Base64. Tapping a row selects that base for the next entry
   /// session; the Base64 row is present but unselectable — the keypad only types 2–36 (docs/00).
   struct BaseRowView: View {
-    static let minimumHeight: CGFloat = 40.0
+    /// 44.0 is the platform minimum hit target — these rows are the primary way to pick a base.
+    static let minimumHeight: CGFloat = 44.0
     static let labelWidth: CGFloat = 44.0
     static let digitsMinimumScaleFactor: CGFloat = 0.5
 

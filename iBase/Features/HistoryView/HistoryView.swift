@@ -23,7 +23,7 @@ struct HistoryView: View {
 
   private var controlsView: some View {
     HStack(spacing: .spacing.small) {
-      Text(verbatim: "\(self.entries.count) ENTRIES")
+      Text("\(self.entries.count) ENTRIES")
         .font(.caption.monospaced())
         .tracking(1.2)
         .monospacedDigit()
@@ -35,8 +35,12 @@ struct HistoryView: View {
       Menu(content: {
         Picker("Sort", selection: self.$sortOption) {
           ForEach(SortOption.allCases) { option in
-            Label(option.rawValue, systemImage: option.systemImageName)
-              .tag(option)
+            Label(title: {
+              Text(option.title)
+            }, icon: {
+              Image(systemName: option.systemImageName)
+            })
+            .tag(option)
           }
         }
         .pickerStyle(.inline)
@@ -231,7 +235,7 @@ struct HistoryView: View {
     .listRowSeparator(.hidden)
     .listRowBackground(Color.clear)
     .accessibilityElement(children: .combine)
-    .accessibilityLabel("\(entry.enteredDigits) in base \(entry.enteredBase)")
+    .accessibilityLabel(Self.accessibilityLabel(for: entry))
     .accessibilityValue(decimalValue)
     // Combining collapses the button, so the trait is restored explicitly.
     .accessibilityAddTraits(.isButton)
@@ -251,6 +255,18 @@ struct HistoryView: View {
       Label("Delete", systemImage: "trash")
     })
     .accessibilityIdentifier("deleteEntryButton-\(entry.enteredDigits)")
+  }
+
+  // MARK: Localized text
+
+  /// Positional specifiers, so a translation is free to put the base first — "en base 16, 7E"
+  /// reads as naturally in Spanish as "7E in base 16" does in English.
+  private static func accessibilityLabel(for entry: HistoryEntry) -> String {
+    return String(
+      format: String(localized: "%1$@ in base %2$lld"),
+      entry.enteredDigits,
+      entry.enteredBase
+    )
   }
 
   private func loadEntry(_ entry: HistoryEntry) {
@@ -286,6 +302,19 @@ extension HistoryView {
     case largest = "Largest"
 
     var id: Self { self }
+
+    /// The raw value stays the stable, untranslated identity of the case; this is what the menu
+    /// shows.
+    var title: LocalizedStringResource {
+      switch self {
+        case .newest:
+          return "Newest"
+        case .oldest:
+          return "Oldest"
+        case .largest:
+          return "Largest"
+      }
+    }
 
     var systemImageName: String {
       switch self {

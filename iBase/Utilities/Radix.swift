@@ -76,6 +76,11 @@ public enum Radix {
   }
 
   /// The short instrument-panel label for a base: "BIN", "OCT", "DEC", "HEX", "B64", else "B\(base)".
+  ///
+  /// **Never localized.** These are notation, not prose — the same three letters an engineer reads
+  /// in a hex dump or a datasheet, in any language. So are the digits `string(from:base:)` and
+  /// `base64String(from:)` return. Only the surrounding chrome ("BASE 16", "ENTER VALUE") is
+  /// translated.
   public static func label(for base: Int) -> String {
     switch base {
       case 2:
@@ -139,7 +144,7 @@ public enum Radix {
     public var errorDescription: String? {
       switch self {
         case .invalidDigits(let digits, let base):
-          return "\"\(digits)\" is not a valid base-\(base) value."
+          return String(format: String(localized: "\"%1$@\" is not a valid base-%2$lld value."), digits, base)
       }
     }
   }

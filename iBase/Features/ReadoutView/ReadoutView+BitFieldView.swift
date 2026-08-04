@@ -71,8 +71,12 @@ extension ReadoutView {
       .animation(.spring(response: 0.22, dampingFraction: 0.8), value: self.value)
       .accessibilityElement(children: .ignore)
       .accessibilityLabel("Bit field")
-      .accessibilityValue("\(self.bitsSet) of \(self.width) bits set")
+      .accessibilityValue(self.accessibilityValue)
       .accessibilityIdentifier("bitFieldView")
+    }
+
+    private var accessibilityValue: String {
+      return String(format: String(localized: "%1$lld of %2$lld bits set"), self.bitsSet, self.width)
     }
 
     private func isSet(_ index: Int) -> Bool {

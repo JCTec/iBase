@@ -15,7 +15,7 @@ struct SettingsView: View {
 
   private var summaryView: some View {
     HStack(spacing: .spacing.small) {
-      Text(verbatim: "\(self.baseVisibility.visibleBases.count) OF \(Radix.displayBases.count) VISIBLE")
+      Text("\(self.baseVisibility.visibleBases.count) OF \(Radix.displayBases.count) VISIBLE")
         .font(.caption.monospaced())
         .tracking(1.2)
         .monospacedDigit()
