@@ -111,6 +111,10 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.JCTechnologies.iBase.uitests
         GENERATE_INFOPLIST_FILE: true
+        # snapshot is simulator-only, and its helper uses UIImage — which does not exist on macOS.
+        # The UI test target builds for both platforms, so these two are excluded from the mac SDK
+        # rather than the whole target being made iOS-only.
+        "EXCLUDED_SOURCE_FILE_NAMES[sdk=macosx*]": "SnapshotHelper.swift ScreenshotUITests.swift"
         # Test bundles do not link AppIntents; without this the extractor warns on every build.
         LM_SKIP_METADATA_EXTRACTION: YES
         TEST_TARGET_NAME: iBase
