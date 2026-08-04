@@ -1,0 +1,28 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Convert a number with ${applicationName}" : {
+      "comment" : "Siri phrase. ${applicationName} is substituted by the system and must be kept verbatim.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Convert a number with ${applicationName}"
+          }
+        }
+      }
+    },
+    "Open ${applicationName}" : {
+      "comment" : "Siri phrase. ${applicationName} is substituted by the system and must be kept verbatim.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open ${applicationName}"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

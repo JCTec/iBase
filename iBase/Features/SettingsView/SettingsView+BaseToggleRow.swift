@@ -23,7 +23,24 @@ extension SettingsView {
     }
 
     private var baseLabel: String {
-      return self.base == Radix.base64Base ? "BASE64" : "BASE \(self.base)"
+      guard self.base != Radix.base64Base else {
+        return "BASE64" // an encoding's name, not a word — untranslated like BIN/OCT/HEX/B64
+      }
+      // Interpolated rather than a positional `%1$lld` format, so this shares one catalog key with
+      // the readout's `Text("BASE \(base)")` instead of adding a second unit to translate.
+      return String(localized: "BASE \(self.base)")
+    }
+
+    /// "HEX, BASE 16" — the row's two lines read as one element.
+    private var rowAccessibilityLabel: String {
+      return String(
+        format: String(
+          localized: "%1$@, %2$@",
+          comment: "Accessibility label for a Settings row: a radix label then its base, \"HEX, BASE 16\""
+        ),
+        Radix.label(for: self.base),
+        self.baseLabel
+      )
     }
 
     var body: some View {
@@ -75,7 +92,7 @@ extension SettingsView {
       ))
       .listRowSeparator(.hidden)
       .listRowBackground(Color.clear)
-      .accessibilityLabel("\(Radix.label(for: self.base)), \(self.baseLabel)")
+      .accessibilityLabel(self.rowAccessibilityLabel)
       .accessibilityIdentifier("baseVisibilityToggle-\(self.base)")
     }
   }

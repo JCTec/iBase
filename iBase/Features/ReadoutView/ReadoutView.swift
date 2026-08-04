@@ -29,7 +29,7 @@ struct ReadoutView: View {
         .fill(Color.accent)
         .frame(width: Self.statusDotSize, height: Self.statusDotSize)
 
-      Text("iBase")
+      Text(verbatim: "iBase") // the product name — the one word that is the same in every language
         .font(.title3.weight(.semibold).monospaced())
         .foregroundStyle(Color.text)
 
@@ -87,7 +87,7 @@ struct ReadoutView: View {
         .foregroundStyle(Color.text)
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityIdentifier("readoutValue")
-        .accessibilityValue("base \(self.selectedBase)")
+        .accessibilityValue(self.baseAccessibilityValue)
 
       self.bitFieldView
     }
@@ -168,7 +168,7 @@ struct ReadoutView: View {
     .menuStyle(.borderlessButton)
     .fixedSize()
     .accessibilityLabel("Entry base")
-    .accessibilityValue("base \(self.selectedBase)")
+    .accessibilityValue(self.baseAccessibilityValue)
     .accessibilityIdentifier("readoutBaseMenu")
   }
 
@@ -241,6 +241,12 @@ struct ReadoutView: View {
     #endif
   }
 
+  // MARK: Localized text
+
+  private var baseAccessibilityValue: String {
+    return String(format: String(localized: "base %1$lld"), self.selectedBase)
+  }
+
   private func openEntry() {
     self.path.append(iBaseCoordinator.entry)
   }
@@ -283,7 +289,10 @@ extension ReadoutView {
   struct ActionButton: View {
     let action: () -> Void
     let imageName: String
-    let accessibilityLabel: String
+    /// A `LocalizedStringResource`, not a `String`: a stored `String` would be resolved at the call
+    /// site and reach the modifier already flattened, so the literal would never be extracted.
+    let accessibilityLabel: LocalizedStringResource
+    /// A `String`, and deliberately so — identifiers are test hooks, never translated.
     let accessibilityIdentifier: String
 
     var body: some View {
@@ -297,7 +306,7 @@ extension ReadoutView {
           .background(Color.text.opacity(0.12), in: RoundedRectangle(cornerRadius: .cornerRadius.large))
       })
       .buttonStyle(.press)
-      .accessibilityLabel(self.accessibilityLabel)
+      .accessibilityLabel(Text(self.accessibilityLabel))
       .accessibilityIdentifier(self.accessibilityIdentifier)
     }
   }

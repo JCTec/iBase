@@ -181,10 +181,17 @@ final class RadixTests: XCTestCase {
     XCTAssertThrowsError(try Radix.value(from: "", base: 10))
   }
 
+  /// Resolved through the String Catalog, not hard-coded in English — see
+  /// `EntryViewModelTests.testInputErrorsDescribeThemselves`.
   func testParseErrorCarriesAReadableDescription() {
     let error = Radix.ParseError.invalidDigits("G", base: 16)
 
-    XCTAssertEqual(error.errorDescription, "\"G\" is not a valid base-16 value.")
+    XCTAssertEqual(
+      error.errorDescription,
+      String(format: String(localized: "\"%1$@\" is not a valid base-%2$lld value.", bundle: .main), "G", 16)
+    )
+    XCTAssertTrue(error.errorDescription?.contains("G") == true)
+    XCTAssertTrue(error.errorDescription?.contains("16") == true)
   }
 
   // MARK: Row presentation

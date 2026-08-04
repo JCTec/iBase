@@ -95,7 +95,7 @@ struct EntryView: View {
           .foregroundStyle(Color.text)
           .accessibilityIdentifier("typingValue")
           .accessibilityLabel("Typed digits")
-          .accessibilityValue(self.viewModel.digits.isEmpty ? "empty" : self.viewModel.digits)
+          .accessibilityValue(self.typedDigitsAccessibilityValue)
 
         RoundedRectangle(cornerRadius: .cornerRadius.small)
           .fill(Color.accent)
@@ -111,6 +111,11 @@ struct EntryView: View {
         .contentTransition(.numericText())
         .foregroundStyle(self.viewModel.previewValue == nil ? Color.dimmed : Color.accent)
         .accessibilityIdentifier("previewLabel")
+        // The visible text is prose and therefore translated; the value is the number alone, which
+        // is not. VoiceOver gains a cleaner reading and the UI journey gains an assertion that
+        // survives every language.
+        .accessibilityLabel("Decimal preview")
+        .accessibilityValue(self.previewAccessibilityValue)
     }
     .padding(.spacing.medium)
     .frame(maxWidth: .infinity, alignment: .leading)
@@ -127,7 +132,8 @@ struct EntryView: View {
   private var quickConversionsView: some View {
     HStack(spacing: .spacing.small) {
       ForEach(Self.quickConversionBases, id: \.self) { base in
-        Text("\(Radix.label(for: base)) \(Radix.string(from: self.viewModel.previewValue ?? 0, base: base))")
+        // Verbatim: a radix label next to its digits is notation end to end (docs/03, `Radix.label`).
+        Text(verbatim: "\(Radix.label(for: base)) \(Radix.string(from: self.viewModel.previewValue ?? 0, base: base))")
           .font(.caption.monospaced())
           .monospacedDigit()
           .contentTransition(.numericText())
@@ -212,7 +218,7 @@ struct EntryView: View {
     .menuStyle(.borderlessButton)
     .fixedSize()
     .accessibilityLabel("Entry base")
-    .accessibilityValue("base \(self.viewModel.base)")
+    .accessibilityValue(self.baseAccessibilityValue)
     .accessibilityIdentifier("entryBaseMenu")
   }
 
@@ -266,11 +272,32 @@ struct EntryView: View {
     }
   }
 
+  // MARK: Localized text
+
   private var previewText: String {
     guard let value = self.viewModel.previewValue else {
-      return "AWAITING INPUT"
+      return String(localized: "AWAITING INPUT")
     }
-    return "= \(value)₁₀ so far"
+    // The ₁₀ subscript is the decimal-base notation, not punctuation — it stays in every language.
+    return String(format: String(localized: "= %1$llu₁₀ so far"), value)
+  }
+
+  private var typedDigitsAccessibilityValue: String {
+    guard !self.viewModel.digits.isEmpty else {
+      return String(localized: "empty", comment: "Accessibility value when nothing has been typed yet")
+    }
+    return self.viewModel.digits // digits are notation, never translated
+  }
+
+  private var previewAccessibilityValue: String {
+    guard let value = self.viewModel.previewValue else {
+      return String(localized: "awaiting input", comment: "Accessibility value of the decimal preview before any digit is typed")
+    }
+    return String(value) // the decimal number alone — no prose, so it reads the same in any language
+  }
+
+  private var baseAccessibilityValue: String {
+    return String(format: String(localized: "base %1$lld"), self.viewModel.base)
   }
 
   private func appendDigit(_ digit: Character) {
@@ -373,7 +400,10 @@ extension EntryView {
   struct ActionButton: View {
     let action: () -> Void
     let imageName: String
-    let accessibilityLabel: String
+    /// A `LocalizedStringResource`, not a `String`: a stored `String` would be resolved at the call
+    /// site and reach the modifier already flattened, so the literal would never be extracted.
+    let accessibilityLabel: LocalizedStringResource
+    /// A `String`, and deliberately so — identifiers are test hooks, never translated.
     let accessibilityIdentifier: String
 
     var body: some View {
@@ -387,7 +417,7 @@ extension EntryView {
           .background(Color.text.opacity(0.12), in: RoundedRectangle(cornerRadius: .cornerRadius.large))
       })
       .buttonStyle(.press)
-      .accessibilityLabel(self.accessibilityLabel)
+      .accessibilityLabel(Text(self.accessibilityLabel))
       .accessibilityIdentifier(self.accessibilityIdentifier)
     }
   }
@@ -403,9 +433,9 @@ extension EntryView {
     var errorDescription: String? {
       switch self {
         case .illegalDigit(let digit):
-          return "\(digit) is not a digit in this base."
+          return String(format: String(localized: "%1$@ is not a digit in this base."), String(digit))
         case .overflow:
-          return "Value exceeds the 64-bit maximum."
+          return String(localized: "Value exceeds the 64-bit maximum.")
       }
     }
   }

@@ -9,6 +9,10 @@ options:
   groupSortPosition: top
   generateEmptyDirectories: true
   xcodeVersion: "2650"
+  # English is the source language of `iBase/Localizable.xcstrings`; every other region is a
+  # translation of it. The set of shipped languages is the catalog's, not a list kept in parallel
+  # here — `xcstringstool` compiles one `.lproj` per localization it finds at build time.
+  developmentLanguage: en
 
 settings:
   base:
@@ -22,6 +26,10 @@ settings:
     GCC_TREAT_WARNINGS_AS_ERRORS: false
     ENABLE_USER_SCRIPT_SANDBOXING: true
     DEAD_CODE_STRIPPING: true
+    # The compiler extracts every `LocalizedStringKey`/`LocalizedStringResource`/`String(localized:)`
+    # literal into the String Catalog on each build — so the catalog is generated output too, and no
+    # string is ever registered by hand.
+    SWIFT_EMIT_LOC_STRINGS: YES
 
 targets:
   iBase:

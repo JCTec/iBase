@@ -65,8 +65,12 @@ extension EntryView {
       .disabled(!isLegal)
       // Dimmed keys stay discoverable to VoiceOver as disabled — the shrinking alphabet must
       // survive non-visually (docs/06).
-      .accessibilityLabel("Digit \(String(digit))")
+      .accessibilityLabel(Self.accessibilityLabel(for: digit))
       .accessibilityIdentifier("keypadKey-\(String(digit))")
+    }
+
+    private static func accessibilityLabel(for digit: Character) -> String {
+      return String(format: String(localized: "Digit %1$@"), String(digit))
     }
   }
 }

@@ -69,7 +69,9 @@ final class iBaseUITests: XCTestCase {
 
     let previewLabel = self.app.staticTexts["previewLabel"]
     XCTAssertTrue(previewLabel.waitForExistence(timeout: 5.0))
-    self.wait(for: previewLabel, toHaveLabel: "= 126₁₀ so far")
+    // The visible text ("= 126₁₀ so far") is translated; the accessibility *value* is the decimal
+    // number on its own, so this assertion holds in every language the app ships.
+    self.wait(for: previewLabel, toHaveValue: "126")
 
     // 5. Commit → the readout carries the value in every base at once.
     self.app.buttons["commitButton"].tap()
@@ -89,7 +91,9 @@ final class iBaseUITests: XCTestCase {
 
     let bitField = self.app.otherElements["bitFieldView"]
     XCTAssertTrue(bitField.waitForExistence(timeout: 5.0))
-    self.wait(for: bitField, toHaveValue: "6 of 16 bits set")
+    // "6 of 16 bits set" / "6 de 16 bits activos" — the prose between the two numbers is
+    // translated, the numbers are not, so those are what the journey pins.
+    self.wait(for: bitField, toHaveValueMatching: "6\\D+16\\D.*")
 
     // 6. History holds the commit; tapping it loads the value back into the readout.
     self.scrollToTop()
@@ -224,6 +228,14 @@ final class iBaseUITests: XCTestCase {
 
   private func wait(for element: XCUIElement, toHaveValue value: String, timeout: TimeInterval = 3.0) {
     let predicate = NSPredicate(format: "value == %@", value)
+    expectation(for: predicate, evaluatedWith: element)
+    waitForExpectations(timeout: timeout)
+  }
+
+  /// For values that are part prose, part data. `MATCHES` is a whole-string match, so the pattern
+  /// has to cover the value end to end.
+  private func wait(for element: XCUIElement, toHaveValueMatching pattern: String, timeout: TimeInterval = 3.0) {
+    let predicate = NSPredicate(format: "value MATCHES %@", pattern)
     expectation(for: predicate, evaluatedWith: element)
     waitForExpectations(timeout: timeout)
   }

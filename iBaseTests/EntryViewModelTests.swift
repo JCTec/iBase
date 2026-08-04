@@ -198,8 +198,21 @@ final class EntryViewModelTests: XCTestCase {
 
   // MARK: Input errors
 
+  /// Expectations are resolved through the String Catalog rather than spelled out in English, so
+  /// the suite passes in every language the app ships. What is pinned is that each case reaches its
+  /// own catalog key, and that the offending digit is substituted into the format.
   func testInputErrorsDescribeThemselves() {
-    XCTAssertEqual(EntryView.InputError.illegalDigit("F").errorDescription, "F is not a digit in this base.")
-    XCTAssertEqual(EntryView.InputError.overflow.errorDescription, "Value exceeds the 64-bit maximum.")
+    XCTAssertEqual(
+      EntryView.InputError.illegalDigit("F").errorDescription,
+      String(format: String(localized: "%1$@ is not a digit in this base.", bundle: .main), "F")
+    )
+    XCTAssertEqual(
+      EntryView.InputError.overflow.errorDescription,
+      String(localized: "Value exceeds the 64-bit maximum.", bundle: .main)
+    )
+    XCTAssertTrue(
+      EntryView.InputError.illegalDigit("F").errorDescription?.contains("F") == true,
+      "the digit that was rejected must survive into the message"
+    )
   }
 }
