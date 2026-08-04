@@ -60,7 +60,7 @@ fastlane/Preview.html
 fastlane/screenshots/**/*.png
 fastlane/test_output
 fastlane/README.md
-vendor/bundle/
+vendor/
 .bundle/
 
 # Credential material — never commit any of these
