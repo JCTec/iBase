@@ -54,6 +54,7 @@ The project's live checklist. Every box ticks before shipping; any unticked box 
 - [ ] `#Preview` on every feature view, seeded with edge cases (0, `UInt64.max`, base 2, base 36)
 - [ ] Scripted App Store screenshots (capture test + composition script, incl. Mac size)
 - [ ] `OpeniBaseIntent` + shortcuts phrases wired
+- [x] Localized in English (source) and Spanish: 62 units across `Localizable`/`InfoPlist`/`AppShortcuts` string catalogs, zero untranslated. Radix notation (`BIN`/`OCT`/`DEC`/`HEX`/`B64`/`BASE64` and all digit output) and accessibility identifiers are excluded on purpose — the first is notation, the second is a test hook. Unit suite and the UI journey pass under `-AppleLanguages (es)`
 
 ## Struck from the template (with reasons — see `00`)
 

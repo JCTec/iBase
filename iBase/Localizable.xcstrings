@@ -8,6 +8,12 @@
             "state" : "translated",
             "value" : "\"%1$@\" is not a valid base-%2$lld value."
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "\"%1$@\" no es un valor válido en base %2$lld."
+          }
         }
       }
     },
@@ -17,6 +23,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@ in base %2$lld"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ en base %2$lld"
           }
         }
       }
@@ -28,6 +40,12 @@
             "state" : "translated",
             "value" : "%1$@ is not a digit in this base."
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ no es un dígito en esta base."
+          }
         }
       }
     },
@@ -35,6 +53,12 @@
       "comment" : "Accessibility label for a Settings row: a radix label then its base, \"HEX, BASE 16\"",
       "localizations" : {
         "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, %2$@"
+          }
+        },
+        "es" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@, %2$@"
@@ -49,12 +73,24 @@
             "state" : "translated",
             "value" : "%1$lld of %2$lld bits set"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld de %2$lld bits activos"
+          }
         }
       }
     },
     "%@ · BASE %lld" : {
       "localizations" : {
         "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · BASE %2$lld"
+          }
+        },
+        "es" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@ · BASE %2$lld"
@@ -69,6 +105,12 @@
             "state" : "translated",
             "value" : "%lld BITS SET"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld BITS ACTIVOS"
+          }
         }
       }
     },
@@ -78,6 +120,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld ENTRIES"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld ENTRADAS"
           }
         }
       }
@@ -89,12 +137,24 @@
             "state" : "translated",
             "value" : "%1$lld OF %2$lld VISIBLE"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld DE %2$lld VISIBLES"
+          }
         }
       }
     },
     "0 · LSB" : {
       "localizations" : {
         "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "0 · LSB"
+          }
+        },
+        "es" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "0 · LSB"
@@ -109,6 +169,12 @@
             "state" : "translated",
             "value" : "= %1$llu₁₀ so far"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "= %1$llu₁₀ hasta ahora"
+          }
         }
       }
     },
@@ -118,6 +184,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AWAITING INPUT"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ESPERANDO ENTRADA"
           }
         }
       }
@@ -129,12 +201,24 @@
             "state" : "translated",
             "value" : "BACK"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ATRÁS"
+          }
         }
       }
     },
     "BASE %lld" : {
       "localizations" : {
         "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BASE %lld"
+          }
+        },
+        "es" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "BASE %lld"
@@ -149,6 +233,12 @@
             "state" : "translated",
             "value" : "BASE %1$lld · %2$@"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BASE %1$lld · %2$@"
+          }
         }
       }
     },
@@ -158,6 +248,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Back"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atrás"
           }
         }
       }
@@ -169,6 +265,12 @@
             "state" : "translated",
             "value" : "Bit field"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Campo de bits"
+          }
         }
       }
     },
@@ -178,6 +280,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "COMMIT"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CONFIRMAR"
           }
         }
       }
@@ -189,6 +297,12 @@
             "state" : "translated",
             "value" : "Cancel"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelar"
+          }
         }
       }
     },
@@ -198,6 +312,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Clear History"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Borrar historial"
           }
         }
       }
@@ -209,6 +329,12 @@
             "state" : "translated",
             "value" : "Clear all history?"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Borrar todo el historial?"
+          }
         }
       }
     },
@@ -218,6 +344,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Commit a value from the keypad and it lands here."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confirma un valor desde el teclado y aparecerá aquí."
           }
         }
       }
@@ -229,6 +361,12 @@
             "state" : "translated",
             "value" : "Commit value"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confirmar valor"
+          }
         }
       }
     },
@@ -238,6 +376,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Could not save"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo guardar"
           }
         }
       }
@@ -249,6 +393,12 @@
             "state" : "translated",
             "value" : "Decimal preview"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vista previa decimal"
+          }
         }
       }
     },
@@ -258,6 +408,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Delete"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminar"
           }
         }
       }
@@ -269,6 +425,12 @@
             "state" : "translated",
             "value" : "Delete last digit"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminar último dígito"
+          }
         }
       }
     },
@@ -278,6 +440,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Delete this entry?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Eliminar esta entrada?"
           }
         }
       }
@@ -289,6 +457,12 @@
             "state" : "translated",
             "value" : "Digit %1$@"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dígito %1$@"
+          }
         }
       }
     },
@@ -298,6 +472,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ENTER VALUE"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "INGRESAR VALOR"
           }
         }
       }
@@ -309,6 +489,12 @@
             "state" : "translated",
             "value" : "ENTRY · BASE %lld"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ENTRADA · BASE %lld"
+          }
         }
       }
     },
@@ -318,6 +504,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Enter a value"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ingresar un valor"
           }
         }
       }
@@ -329,6 +521,12 @@
             "state" : "translated",
             "value" : "Entry base"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Base de entrada"
+          }
         }
       }
     },
@@ -338,6 +536,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Filter history"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filtrar historial"
           }
         }
       }
@@ -349,6 +553,12 @@
             "state" : "translated",
             "value" : "History"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Historial"
+          }
         }
       }
     },
@@ -358,6 +568,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "History options"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opciones del historial"
           }
         }
       }
@@ -369,6 +585,12 @@
             "state" : "translated",
             "value" : "INPUT"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ENTRADA"
+          }
         }
       }
     },
@@ -378,6 +600,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Keypad"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teclado"
           }
         }
       }
@@ -389,12 +617,24 @@
             "state" : "translated",
             "value" : "Largest"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mayor valor"
+          }
         }
       }
     },
     "MSB · %lld" : {
       "localizations" : {
         "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MSB · %lld"
+          }
+        },
+        "es" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "MSB · %lld"
@@ -409,6 +649,12 @@
             "state" : "translated",
             "value" : "Newest"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Más reciente"
+          }
         }
       }
     },
@@ -418,6 +664,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "No bases shown"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ninguna base visible"
           }
         }
       }
@@ -429,12 +681,24 @@
             "state" : "translated",
             "value" : "No conversions yet"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aún no hay conversiones"
+          }
         }
       }
     },
     "OK" : {
       "localizations" : {
         "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "es" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -449,6 +713,12 @@
             "state" : "translated",
             "value" : "Oldest"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Más antiguo"
+          }
         }
       }
     },
@@ -458,6 +728,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Open iBase"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir iBase"
           }
         }
       }
@@ -469,6 +745,12 @@
             "state" : "translated",
             "value" : "Open iBase and see the number in every base."
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abre iBase y ve el número en todas las bases."
+          }
         }
       }
     },
@@ -478,6 +760,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "RADIX 2–64"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BASES 2–64"
           }
         }
       }
@@ -489,6 +777,12 @@
             "state" : "translated",
             "value" : "RESTORE DEFAULTS"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "RESTABLECER VALORES"
+          }
         }
       }
     },
@@ -498,6 +792,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Restore default bases"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restablecer bases predeterminadas"
           }
         }
       }
@@ -509,6 +809,12 @@
             "state" : "translated",
             "value" : "Settings"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustes"
+          }
         }
       }
     },
@@ -518,6 +824,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sort"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ordenar"
           }
         }
       }
@@ -529,6 +841,12 @@
             "state" : "translated",
             "value" : "TYPING"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ESCRIBIENDO"
+          }
         }
       }
     },
@@ -538,6 +856,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Turn bases on in Settings to see them here."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activa bases en Ajustes para verlas aquí."
           }
         }
       }
@@ -549,6 +873,12 @@
             "state" : "translated",
             "value" : "Typed digits"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dígitos escritos"
+          }
         }
       }
     },
@@ -558,6 +888,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Value exceeds the 64-bit maximum."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El valor supera el máximo de 64 bits."
           }
         }
       }
@@ -570,12 +906,24 @@
             "state" : "translated",
             "value" : "awaiting input"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "esperando entrada"
+          }
         }
       }
     },
     "base %1$lld" : {
       "localizations" : {
         "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "base %1$lld"
+          }
+        },
+        "es" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "base %1$lld"
@@ -590,6 +938,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "empty"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "vacío"
           }
         }
       }

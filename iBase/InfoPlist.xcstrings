@@ -10,6 +10,12 @@
             "state" : "translated",
             "value" : "iBase"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iBase"
+          }
         }
       }
     }
