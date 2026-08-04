@@ -66,6 +66,7 @@ vendor/
 # Credential material — never commit any of these
 fastlane/.env
 fastlane/.env.*
+!fastlane/.env.example
 *.p8
 *.p12
 *.cer
