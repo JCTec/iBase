@@ -29,7 +29,10 @@ jobs:
             destination: "platform=iOS Simulator,name=iPhone 17 Pro"
             device: "iPhone 17 Pro"
             slug: iphone
-            testing: "-only-testing:iBaseTests -only-testing:iBaseUITests"
+            # Behavioural tests only. Screenshot capture belongs to release.yml, where the images
+            # are actually collected — running it here launched the app ten times per job and was
+            # the surface for "Timed out while launching application via Xcode".
+            testing: "-only-testing:iBaseTests -only-testing:iBaseUITests/iBaseUITests"
           - name: iPad
             destination: "platform=iOS Simulator,name=iPad Pro 13-inch (M5)"
             device: "iPad Pro 13-inch (M5)"
