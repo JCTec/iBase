@@ -28,9 +28,30 @@ IPAD_DESTINATION    = ENV["IBASE_IPAD_DEVICE"]     || "iPad Pro 13-inch (M5)"
 BUILD_DIR           = "build"
 DERIVED_DATA        = "build/DerivedData"
 
-# The iPad leg mirrors .github/workflows/ci.yml: the full unit suite plus the two UI journeys that
-# are meaningful on a regular-width layout. Running the whole UI suite twice buys nothing.
-IPAD_UI_TESTS = [
+# Parity with ci.yml's `-retry-tests-on-failure -test-iterations 2`. One retry, not a licence for
+# flaky tests: a simulator app launch can time out on a loaded runner for reasons that have nothing
+# to do with the app, and this lane is the long pole of the release job — a single transient launch
+# failure otherwise costs the whole forty-minute run.
+TEST_RETRIES = 1
+
+# Both legs mirror .github/workflows/ci.yml — the two must not drift, or a lane passes on push and
+# fails at tag time (or the reverse).
+#
+# iPhone: the unit suite plus the behavioural UI class, and deliberately *not* `ScreenshotUITests`.
+# Capture belongs to the `screenshots` lane, which is where the images are actually collected.
+# Naming the whole `iBaseUITests` target here instead adds four more app launches to a leg that
+# already launches six, and that is precisely how the tag run for v2.0.0 died: "Failed to launch …
+# via Xcode: Timed out while launching application via Xcode", then a hang until the job hit its
+# 60-minute ceiling. ci.yml was scoped for this in 466fc2a; this lane was missed.
+IPHONE_TESTS = [
+  UNIT_TEST_TARGET,
+  "#{UI_TEST_TARGET}/iBaseUITests"
+].freeze
+
+# iPad: the full unit suite plus the two UI journeys that are meaningful on a regular-width layout.
+# Running the whole UI suite twice buys nothing.
+IPAD_TESTS = [
+  UNIT_TEST_TARGET,
   "#{UI_TEST_TARGET}/iBaseUITests/testConvertCommitReloadAndDeleteJourney",
   "#{UI_TEST_TARGET}/iBaseUITests/testSettingsControlsWhichBaseRowsAppear"
 ].freeze
@@ -66,6 +87,8 @@ lane :test do
     project: PROJECT,
     scheme: SCHEME,
     destination: "platform=iOS Simulator,name=#{IPHONE_DESTINATION}",
+    only_testing: IPHONE_TESTS,
+    number_of_retries: TEST_RETRIES,
     derived_data_path: DERIVED_DATA,
     result_bundle: true,
     output_directory: "#{BUILD_DIR}/test-results/iphone",
@@ -78,7 +101,8 @@ lane :test do
     project: PROJECT,
     scheme: SCHEME,
     destination: "platform=iOS Simulator,name=#{IPAD_DESTINATION}",
-    only_testing: [UNIT_TEST_TARGET] + IPAD_UI_TESTS,
+    only_testing: IPAD_TESTS,
+    number_of_retries: TEST_RETRIES,
     derived_data_path: DERIVED_DATA,
     result_bundle: true,
     output_directory: "#{BUILD_DIR}/test-results/ipad",
@@ -95,6 +119,7 @@ lane :test do
     scheme: SCHEME,
     destination: "platform=macOS",
     only_testing: [UNIT_TEST_TARGET],
+    number_of_retries: TEST_RETRIES,
     derived_data_path: DERIVED_DATA,
     result_bundle: true,
     output_directory: "#{BUILD_DIR}/test-results/macos",

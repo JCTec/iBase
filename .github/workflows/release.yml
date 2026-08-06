@@ -29,7 +29,9 @@ jobs:
   release:
     name: Validate and capture screenshots
     runs-on: macos-26
-    timeout-minutes: 60
+    # Three validation legs plus a two-device, four-screen capture. The 60-minute ceiling left no
+    # headroom on a slow runner: run 30866778685 was killed by it rather than by any failure.
+    timeout-minutes: 90
 
     steps:
       - name: Checkout
@@ -52,22 +54,54 @@ jobs:
           ruby-version: "3.3"
           bundler-cache: true
 
-      # A cold simulator racing the first app launch produced "Timed out while launching application
-      # via Xcode" on a loaded runner. Booting and settling first removes the race — and this job
-      # drives three simulators, so it matters more here than anywhere.
-      - name: Boot simulators
+      # Every device this job needs must exist on the runner image. Checked up front and cheaply, so
+      # a missing simulator fails in seconds rather than forty minutes later inside a lane.
+      - name: Verify simulators are available
         run: |
           for device in "iPhone 17 Pro" "iPhone 17 Pro Max" "iPad Pro 13-inch (M5)"; do
+            xcrun simctl list devices available -j \
+              | python3 -c "import sys,json;d=json.load(sys.stdin);sys.exit(0 if any(x['name']=='$device' for v in d['devices'].values() for x in v) else 1)" \
+              || { echo "::error::$device is not available on this runner image"; exit 1; }
+            echo "ok: $device"
+          done
+
+      # A cold simulator racing the first app launch produced "Timed out while launching application
+      # via Xcode" on a loaded runner. Booting and settling first removes the race.
+      #
+      # Only the two devices the `test` lane drives. "iPhone 17 Pro Max" is screenshot-only, and
+      # fastlane/Snapfile sets erase_simulator(true) — snapshot wipes and reboots it regardless, so
+      # booting it here is work thrown away. On run 30866778685 that throwaway boot spent 13m50s of
+      # a 60-minute budget before the job had compiled a single line.
+      - name: Boot simulators
+        run: |
+          for device in "iPhone 17 Pro" "iPad Pro 13-inch (M5)"; do
             UDID=$(xcrun simctl list devices available -j \
-              | python3 -c "import sys,json;d=json.load(sys.stdin);print(next((x['udid'] for v in d['devices'].values() for x in v if x['name']=='$device'), ''))")
-            if [ -n "$UDID" ]; then
-              echo "Booting $device ($UDID)"
-              xcrun simctl boot "$UDID" || true
-              xcrun simctl bootstatus "$UDID" -b || true
+              | python3 -c "import sys,json;d=json.load(sys.stdin);print(next(x['udid'] for v in d['devices'].values() for x in v if x['name']=='$device'))")
+            echo "Booting $device ($UDID)"
+            xcrun simctl boot "$UDID" || true
+
+            # Bounded wait. Settling is an optimisation, not a precondition — a runner that takes
+            # ten minutes on "Waiting on Data Migration" must cost this step five minutes, not the
+            # whole job. `timeout` is not on the macOS runner PATH, hence the explicit poll, and the
+            # sentinel rather than `kill -0`: an exited-but-unreaped child still answers signal 0,
+            # which would silently burn the entire bound every time.
+            done_marker="$RUNNER_TEMP/bootstatus-$UDID.done"
+            rm -f "$done_marker"
+            ( xcrun simctl bootstatus "$UDID" -b >/dev/null 2>&1; touch "$done_marker" ) &
+            pid=$!
+            waited=0
+            while [ ! -f "$done_marker" ] && [ "$waited" -lt 300 ]; do
+              sleep 5
+              waited=$((waited + 5))
+            done
+            if [ -f "$done_marker" ]; then
+              echo "$device settled in ${waited}s"
             else
-              echo "::error::$device is not available on this runner image"
-              exit 1
+              echo "::warning::$device did not settle within ${waited}s — continuing anyway"
+              pkill -P "$pid" 2>/dev/null || true
+              kill "$pid" 2>/dev/null || true
             fi
+            wait "$pid" 2>/dev/null || true
           done
 
       # Validation first. Screenshots of a build that does not pass its own tests are worthless.
@@ -79,8 +113,13 @@ jobs:
 
       # The deliverable. `error` on missing files, because a lane that reports success while
       # producing nothing must fail the run — silence is not success.
+      #
+      # `success()`, not `always()`: when validation fails there are legitimately no images, and
+      # uploading unconditionally turned that into a second and third red ❌ ("No files were found
+      # with the provided path") stacked on top of the real error. The guarantee is unchanged —
+      # if every step ran, the images must exist.
       - name: Upload App Store images
-        if: always()
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: appstore-images-${{ github.run_id }}
@@ -89,14 +128,16 @@ jobs:
           retention-days: 30
 
       # Unbranded captures, kept separately: useful for diagnosing a bad composite, not for
-      # uploading to App Store Connect.
+      # uploading to App Store Connect. Diagnostic, so `always()` and `warn` — on a run that died
+      # during capture these are exactly what you want to look at, and however few there are is
+      # information, not a reason to fail an already-failing run a second time.
       - name: Upload raw captures
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: raw-captures-${{ github.run_id }}
           path: build/screenshots/**
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 7
 
       - name: Upload logs
